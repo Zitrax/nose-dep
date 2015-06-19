@@ -8,15 +8,27 @@ order = None
 
 
 def depends(func=None, after=None, before=None):
+    """
+    Decorator to specify test dependencies.
+
+    :param after: The test needs to run after this/these tests. String or list of strings.
+    :param before: The test needs to run before this/these tests. String or list of strings.
+    """
     if not after and not before:
         raise ValueError("depends decorator needs at least one argument")
     if func is None:
         return partial(depends, after=after, before=before)
 
+    def self_check(a, b):
+        if a == b:
+            raise ValueError("Test '{}' cannot depend on itself".format(a))
+
     if after:
+        self_check(func.__name__, after)
         dependencies[func.__name__].add(after)
     if before:
-        dependencies[after].add(func.__name__)
+        self_check(func.__name__, before)
+        dependencies[before].add(func.__name__)
 
     @wraps(func)
     def inner(*args, **kwargs):
