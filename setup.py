@@ -3,12 +3,11 @@ from setuptools import setup
 setup_args = dict(
     name='nosedep',
     version='0.1',
-    #url='http://github.com/',
+    url='https://bitbucket.org/Zitrax/nose-dep',
     maintainer='Daniel Bengtsson',
     maintainer_email='daniel@bengtssons.info',
     description='Nose test dependency support',
-    #long_description=open('README').read(),
-    install_requires=['nose'],
+    # long_description=open('README').read(),
     license='GNU GPLv3+',
     py_modules=['nosedep'],
     zip_safe=False,
@@ -20,4 +19,5 @@ setup_args = dict(
     )
 
 if __name__ == '__main__':
-    setup(**setup_args)
+    setup(install_requires=['nose', 'toposort'],
+          **setup_args)

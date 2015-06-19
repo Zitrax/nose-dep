@@ -1,8 +1,30 @@
+from collections import defaultdict
+from functools import partial, wraps
 from nose.plugins import Plugin
+from toposort import toposort_flatten
+
+dependencies = defaultdict(set)
+order = None
+
+
+def depends(func=None, after=None, before=None):
+    if not after and not before:
+        raise ValueError("depends decorator needs at least one argument")
+    if func is None:
+        return partial(depends, after=after, before=before)
+
+    if after:
+        dependencies[func.__name__].add(after)
+    if before:
+        dependencies[after].add(func.__name__)
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        return func(*args, **kwargs)
+    return inner
 
 
 class NoseDep(Plugin):
-    #enabled = False
     name = "nosedep"
     score = 100
 
@@ -10,57 +32,21 @@ class NoseDep(Plugin):
         super(NoseDep, self).__init__()
 
     def options(self, parser, env):
-        print("OPT")
-        super().options(parser, env)
+        super(self.__class__, self).options(parser, env)
 
     def configure(self, options, conf):
-        print("CONF")
-        super().configure(options, conf)
-        if not self.enabled:
-            print("NOT")
-        else:
-            print("YES")
+        global order
+        super(self.__class__, self).configure(options, conf)
+        if self.enabled:
+            # Calculate dependencies
+            order = toposort_flatten(dependencies)
 
+    # noinspection PyMethodMayBeStatic
     def prepareTest(self, test):
-        print("PT {}".format(test))
-        print(test._tests)
-        all_tests = []
+        global order
+        all_tests = {}
         for t in test._tests:
             for tt in t:
-                all_tests.append(tt)
-        test._tests = (t for t in reversed(all_tests))
-        for t in test._tests:
-            print("1", t)
+                all_tests[tt.test.test.__name__] = tt
+        test._tests = (all_tests[t] for t in order)
         return test
-
-    def makeTest(self, obj, parent):
-        print("MT {} {}".format(obj, parent))
-
-    def addSuccess(self, test):
-        print("OKI DOKI")
-
-    def loadTestsFromDir(self, path):
-        print("HERE1")
-
-    def loadTestsFromModule(self, module, path=None):
-        print("HERE2 {}".format(module))
-
-    def loadTestsFromName(self, name, module=None, importPath=None):
-        print("HERE3 {}".format(name))
-
-    def loadTestsFromNames(self, names, module=None):
-        print("HERE4 {}".format(names))
-        #from nose import loader
-        #l = loader.TestLoader()
-        #tmp = l.loadTestsFromNames(names, module)
-        #print(tmp)
-        #return tmp
-
-    def loadTestsFromFile(self, filename):
-        print("HERE5")
-
-    def loadTestsFromTestCase(self, cls):
-        print("HERE6")
-
-    def loadTestsFromTestClass(self, cls):
-        print("HERE7")
