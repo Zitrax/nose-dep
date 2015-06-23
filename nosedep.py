@@ -15,6 +15,7 @@ Currently this just determines the test order, thus even if test B depends
 on test A and A failed B will still run. In the future we might want to
 skip test B and all other remaining tests in the affected dependency chain.
 """
+from itertools import chain
 
 import string
 from collections import defaultdict
@@ -64,11 +65,9 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-        parts = string.split(name, '.')
+        parts = string.split(name, '.', maxsplit=1)
         if len(parts) == 2:
             self.tests.append(parts[1])
-        elif len(parts) > 2:
-            raise ValueError("Not supported. Fix me.")
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
 
 
@@ -100,8 +99,14 @@ class NoseDep(Plugin):
         all_tests = {}
         for t in test._tests:
             for tt in t:
-                all_tests[tt.test.test.__name__] = tt
+                # FIXME: Change check to not use protected member
+                if hasattr(tt, '_tests'):  # MethodTestCase
+                    for mt in tt:
+                        all_tests[mt.test.address()[-1]] = mt
+                else:  # FunctionTestCase
+                    all_tests[tt.test.test.__name__] = tt
 
+        print all_tests
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
@@ -112,7 +117,14 @@ class NoseDep(Plugin):
                 setattr(all_tests[t], 'nosedep_run', True)
                 mark_deps(t)
 
-            test._tests = (all_tests[t] for t in order if getattr(all_tests[t], 'nosedep_run', False))
+            def should_test(t):
+                return getattr(all_tests[t], 'nosedep_run', False)
+
+            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order and should_test(t))
+            deps = (all_tests[t] for t in order if should_test(t))
+            test._tests = chain(no_deps, deps)
         else:  # If we should run all tests
-            test._tests = (all_tests[t] for t in order)
+            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order)
+            deps = (all_tests[t] for t in order)
+            test._tests = chain(no_deps, deps)
         return test
