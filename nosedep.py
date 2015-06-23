@@ -16,8 +16,10 @@ on test A and A failed B will still run. In the future we might want to
 skip test B and all other remaining tests in the affected dependency chain.
 """
 
+import string
 from collections import defaultdict
 from functools import partial, wraps
+from nose.loader import TestLoader
 from nose.plugins import Plugin
 from toposort import toposort_flatten
 
@@ -26,8 +28,7 @@ order = None
 
 
 def depends(func=None, after=None, before=None):
-    """
-    Decorator to specify test dependencies.
+    """Decorator to specify test dependencies
 
     :param after: The test needs to run after this/these tests. String or list of strings.
     :param before: The test needs to run before this/these tests. String or list of strings.
@@ -54,12 +55,30 @@ def depends(func=None, after=None, before=None):
     return inner
 
 
+class DepLoader(TestLoader):
+    """Loader that stores what was specified but still loads all tests"""
+
+    def __init__(self):
+        super(DepLoader, self).__init__()
+        self.tests = []
+
+    def loadTestsFromName(self, name, module=None, discovered=False):
+        """Need to load all tests since we might have dependencies"""
+        parts = string.split(name, '.')
+        if len(parts) == 2:
+            self.tests.append(parts[1])
+        elif len(parts) > 2:
+            raise ValueError("Not supported. Fix me.")
+        return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
+
+
 class NoseDep(Plugin):
     name = "nosedep"
     score = 100
 
     def __init__(self):
         super(NoseDep, self).__init__()
+        self.loader = None
 
     def options(self, parser, env):
         super(self.__class__, self).options(parser, env)
@@ -71,6 +90,10 @@ class NoseDep(Plugin):
             # Calculate dependencies
             order = toposort_flatten(dependencies)
 
+    def prepareTestLoader(self, _):
+        self.loader = DepLoader()
+        return self.loader
+
     # noinspection PyMethodMayBeStatic
     def prepareTest(self, test):
         global order
@@ -78,5 +101,18 @@ class NoseDep(Plugin):
         for t in test._tests:
             for tt in t:
                 all_tests[tt.test.test.__name__] = tt
-        test._tests = (all_tests[t] for t in order)
+
+        if self.loader.tests:  # If specific tests were mentioned on the command line
+            def mark_deps(t):
+                if t in dependencies:
+                    for dep in dependencies[t]:
+                        setattr(all_tests[dep], 'nosedep_run', True)
+                        mark_deps(dep)
+            for t in self.loader.tests:
+                setattr(all_tests[t], 'nosedep_run', True)
+                mark_deps(t)
+
+            test._tests = (all_tests[t] for t in order if getattr(all_tests[t], 'nosedep_run', False))
+        else:  # If we should run all tests
+            test._tests = (all_tests[t] for t in order)
         return test
