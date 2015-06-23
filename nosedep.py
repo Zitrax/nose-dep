@@ -106,7 +106,6 @@ class NoseDep(Plugin):
                 else:  # FunctionTestCase
                     all_tests[tt.test.test.__name__] = tt
 
-        print all_tests
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
