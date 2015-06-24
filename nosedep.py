@@ -14,6 +14,10 @@ specific test(s).
 Currently this just determines the test order, thus even if test B depends
 on test A and A failed B will still run. In the future we might want to
 skip test B and all other remaining tests in the affected dependency chain.
+
+It do however support running the necessary dependencies for a single test,
+thus if you specify to run only test B and test B depends on A; then A will
+run before B to satisfy that dependency.
 """
 from itertools import chain
 
