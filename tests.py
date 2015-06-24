@@ -1,90 +1,98 @@
 import unittest
 from nose.plugins import PluginTester
-from nose.tools import assert_true, assert_false
-from nosedep import depends, NoseDep
+from nosedep import NoseDep
+from test_scripts.decorated_method_tests import TestNoseDecoratedMethod
 
 
-@depends(after='test_b')
-def test_a():
-    assert_true(True)
-
-
-def test_b():
-    assert_true(True)
-
-
-@depends(after='test_b')
-def test_c():
-    assert_true(True)
-
-
-@depends(after='test_a')
-def test_d():
-    assert_true(True)
-
-
-@depends(before='test_c')
-def test_e():
-    assert_true(True)
-
-
-def test_f():
-    pass
-
-
-class TestNoseDep(object):
-    did_setup_class = False
-    did_teardown_class = False
-
-    def __init__(self):
-        self.did_setup = False
-        self.did_teardown = False
-
-    @classmethod
-    def setup_class(cls):
-        #import traceback
-        #traceback.print_stack()
-        cls.did_setup_class = True
-
-    @classmethod
-    def teardown_class(cls):
-        cls.did_teardown_class = True
-
-    def setup(self):
-        self.did_setup = True
-
-    def teardown(self):
-        self.did_teardown = True
-
-    def test_c_a(self):
-        assert_true(self.did_setup)
-        assert_true(self.did_setup_class)
-        assert_false(self.did_teardown)
-        assert_false(self.did_teardown_class)
-
-    def test_c_b(self):
-        pass
-
-class TestFancyOutputter(PluginTester, unittest.TestCase):
-    activate = '--with-nosedep'  # enables the plugin
+class NoseDepPluginTester(PluginTester, unittest.TestCase):
+    activate = '--with-nosedep'
+    args = ['-v']
     plugins = [NoseDep()]
-    args = []
-    env = {}
 
-    def test_fancy_output(self):
-        assert "FANCY FANCY FANCY" in self.output, ("got: %s" % self.output)
+    # This is a bit odd. If using the absolute path on Windows
+    # it tries to import module 'C' due to the ':' , if only relative path
+    # it splits on the '.' before the file extension.
+    # So I only got it to work with a relative path appended with a ':'.
+    suitepath = None
 
     def makeSuite(self):
-        class TC(unittest.TestCase):
-            def runTest(self):
-                raise ValueError("I hate fancy stuff")
-        return [TC('runTest')]
+        raise Exception("Should not be used currently")
+
+    def check(self, expect):
+        for line in self.output:
+            if expect:
+                self.assertEqual(line.strip(), expect.pop(0))
+
+
+class TestUndecoratedFunctional(NoseDepPluginTester):
+    suitepath = "test_scripts/undecorated_functional_tests.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.undecorated_functional_tests.test_x ... ok',
+                    'test_scripts.undecorated_functional_tests.test_y ... ERROR'])
+
+
+class TestDecoratedFunctionalAll(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_tests.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_tests.test_f ... ok',
+                    'test_scripts.decorated_functional_tests.test_b ... ok',
+                    'test_scripts.decorated_functional_tests.test_e ... ok',
+                    'test_scripts.decorated_functional_tests.test_a ... ok',
+                    'test_scripts.decorated_functional_tests.test_c ... ok',
+                    'test_scripts.decorated_functional_tests.test_d ... ok'])
+
+
+class TestDecoratedFunctionalSpecificDep(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_tests.py:test_d"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_tests.test_b ... ok',
+                    'test_scripts.decorated_functional_tests.test_a ... ok',
+                    'test_scripts.decorated_functional_tests.test_d ... ok'])
+
+
+class TestDecoratedFunctionalSpecificNoDep(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_tests.py:test_f"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_tests.test_f ... ok'])
+
+
+class TestUndecoratedMethod(NoseDepPluginTester):
+    suitepath = "test_scripts/undecorated_method_tests.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.undecorated_method_tests.TestNoseUndecoratedMethod.test_c_a ... ok',
+                    'test_scripts.undecorated_method_tests.TestNoseUndecoratedMethod.test_c_b ... ok'])
+
+
+class TestDecoratedMethod(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_tests.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_a ... ok',
+                    'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_c ... ok',
+                    'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
+
+
+class TestDecoratedMethodSpecificNoDep(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_tests.py:TestNoseDecoratedMethod.test_cd_a"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_a ... ok'])
+
+
+class TestDecoratedMethodSpecificDep(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_tests.py:TestNoseDecoratedMethod.test_cd_b"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_c ... ok',
+                    'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
+
 
 if __name__ == '__main__':
-    # Temporary for force testing using the plugin
-    #import nose
-    #from nosedep import NoseDep
-    #nose.main(defaultTest=__name__, addplugins=[NoseDep()])
     unittest.main()
 
 
@@ -97,3 +105,6 @@ if __name__ == '__main__':
 # * Test both with file and __main__ specifying prefix
 # * Verify that setup/teardown is run both for func and method tests
 # * Verify that each test only run a single time
+
+# FIXME: Dependencies are global and not qualified. Would probably be best if
+#        it contained unique qualifiers. (now we can't use the same test name in different files)

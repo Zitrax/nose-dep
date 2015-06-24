@@ -25,7 +25,6 @@ from nose.plugins import Plugin
 from toposort import toposort_flatten
 
 dependencies = defaultdict(set)
-order = None
 
 
 def depends(func=None, after=None, before=None):
@@ -65,10 +64,9 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-        parts = string.split(name, ':' if ':' in name else '.', maxsplit=1)
-        if len(parts) == 2:
-            self.tests.append(parts[1])
-        #print parts
+        parts = string.split(name, ':' if ':' in name else '.')
+        if len(parts) == 2 and parts[1]:
+            self.tests.append(parts[-1].split('.')[-1])
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
 
 
@@ -84,11 +82,7 @@ class NoseDep(Plugin):
         super(self.__class__, self).options(parser, env)
 
     def configure(self, options, conf):
-        global order
         super(self.__class__, self).configure(options, conf)
-        if self.enabled:
-            # Calculate dependencies
-            order = toposort_flatten(dependencies)
 
     def prepareTestLoader(self, _):
         self.loader = DepLoader()
@@ -102,9 +96,9 @@ class NoseDep(Plugin):
 
         all_tests = {}
         for s in suite:
-            print s.address()[-1]
-            all_tests[s.address()[-1]] = s
+            all_tests[string.split(str(s), '.')[-1]] = s
 
+        order = toposort_flatten(dependencies)
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
@@ -124,17 +118,15 @@ class NoseDep(Plugin):
 
             suite._tests = chain(no_deps, deps)
         else:  # If we should run all tests
-            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order)
+            no_deps = (all_tests[t] for t in sorted(all_tests.keys()) if t not in order)
             deps = (all_tests[t] for t in order if t in all_tests)
             suite._tests = chain(no_deps, deps)
         return suite
 
     # noinspection PyMethodMayBeStatic
     def prepareTest(self, test):
-        global order
         all_tests = {}
         for t in test._tests:
-            print "T:", type(t)
             for tt in t:
                 # FIXME: Change check to not use protected member
                 if hasattr(tt, '_tests'):  # MethodTestCase
@@ -143,7 +135,7 @@ class NoseDep(Plugin):
                 else:  # FunctionTestCase
                     all_tests[tt.test.test.__name__] = tt
 
-        print all_tests
+        order = toposort_flatten(dependencies)
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
@@ -156,14 +148,14 @@ class NoseDep(Plugin):
                     mark_deps(t)
 
             def should_test(t):
-                return getattr(all_tests[t], 'nosedep_run', False)
+                return t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
 
             no_deps = (all_tests[t] for t in all_tests.keys() if t not in order and should_test(t))
             deps = (all_tests[t] for t in order if should_test(t))
 
             test._tests = chain(no_deps, deps)
         else:  # If we should run all tests
-            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order)
-            deps = (all_tests[t] for t in order)
+            no_deps = (all_tests[t] for t in sorted(all_tests.keys()) if t not in order)
+            deps = (all_tests[t] for t in order if t in all_tests)
             test._tests = chain(no_deps, deps)
         return test
