@@ -1,7 +1,6 @@
 import unittest
 from nose.plugins import PluginTester
 from nosedep import NoseDep
-from test_scripts.decorated_method_tests import TestNoseDecoratedMethod
 
 
 class NoseDepPluginTester(PluginTester, unittest.TestCase):
