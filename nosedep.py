@@ -65,9 +65,10 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-        parts = string.split(name, '.', maxsplit=1)
+        parts = string.split(name, ':' if ':' in name else '.', maxsplit=1)
         if len(parts) == 2:
             self.tests.append(parts[1])
+        #print parts
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
 
 
@@ -93,18 +94,16 @@ class NoseDep(Plugin):
         self.loader = DepLoader()
         return self.loader
 
-    # noinspection PyMethodMayBeStatic
-    def prepareTest(self, test):
-        global order
+    def prepareSuite(self, suite):
+        # FIXME: This is horribly similar to prepareTest
+        #        should share code
+        # ----------------------------------------------
+        # Diff is the all_tests collection and the check "t in all_tests"
+
         all_tests = {}
-        for t in test._tests:
-            for tt in t:
-                # FIXME: Change check to not use protected member
-                if hasattr(tt, '_tests'):  # MethodTestCase
-                    for mt in tt:
-                        all_tests[mt.test.address()[-1]] = mt
-                else:  # FunctionTestCase
-                    all_tests[tt.test.test.__name__] = tt
+        for s in suite:
+            print s.address()[-1]
+            all_tests[s.address()[-1]] = s
 
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
@@ -113,14 +112,55 @@ class NoseDep(Plugin):
                         setattr(all_tests[dep], 'nosedep_run', True)
                         mark_deps(dep)
             for t in self.loader.tests:
-                setattr(all_tests[t], 'nosedep_run', True)
-                mark_deps(t)
+                if t in all_tests:
+                    setattr(all_tests[t], 'nosedep_run', True)
+                    mark_deps(t)
+
+            def should_test(t):
+                return t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
+
+            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order and should_test(t))
+            deps = (all_tests[t] for t in order if should_test(t))
+
+            suite._tests = chain(no_deps, deps)
+        else:  # If we should run all tests
+            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order)
+            deps = (all_tests[t] for t in order if t in all_tests)
+            suite._tests = chain(no_deps, deps)
+        return suite
+
+    # noinspection PyMethodMayBeStatic
+    def prepareTest(self, test):
+        global order
+        all_tests = {}
+        for t in test._tests:
+            print "T:", type(t)
+            for tt in t:
+                # FIXME: Change check to not use protected member
+                if hasattr(tt, '_tests'):  # MethodTestCase
+                    all_tests[tt.context.__name__] = self.prepareSuite(tt)
+                    setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
+                else:  # FunctionTestCase
+                    all_tests[tt.test.test.__name__] = tt
+
+        print all_tests
+        if self.loader.tests:  # If specific tests were mentioned on the command line
+            def mark_deps(t):
+                if t in dependencies:
+                    for dep in dependencies[t]:
+                        setattr(all_tests[dep], 'nosedep_run', True)
+                        mark_deps(dep)
+            for t in self.loader.tests:
+                if t in all_tests:
+                    setattr(all_tests[t], 'nosedep_run', True)
+                    mark_deps(t)
 
             def should_test(t):
                 return getattr(all_tests[t], 'nosedep_run', False)
 
             no_deps = (all_tests[t] for t in all_tests.keys() if t not in order and should_test(t))
             deps = (all_tests[t] for t in order if should_test(t))
+
             test._tests = chain(no_deps, deps)
         else:  # If we should run all tests
             no_deps = (all_tests[t] for t in all_tests.keys() if t not in order)
