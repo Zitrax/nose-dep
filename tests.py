@@ -1,5 +1,7 @@
+import os
 import unittest
 from nose.plugins import PluginTester
+from nose.plugins.xunit import Xunit
 from nose.tools import assert_in
 from nosedep import NoseDep
 
@@ -27,8 +29,30 @@ class NoseDepPluginTester(PluginTester, unittest.TestCase):
         assert_in("Ran {} test{} in".format(results, 's' if results > 1 else ''),
                   str(self.output))
 
+
 class TestUndecoratedFunctional(NoseDepPluginTester):
     suitepath = "test_scripts/undecorated_functional_tests.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.undecorated_functional_tests.test_x ... ok',
+                    'test_scripts.undecorated_functional_tests.test_y ... ERROR'])
+
+
+class TestUndecoratedFunctionalXunit(NoseDepPluginTester):
+    # Initially there was a bug causing Xunit to fail in
+    # combination with nosedep. This test verifies that it works.
+    args = ['-v', '--with-xunit']
+    plugins = [NoseDep(), Xunit()]
+    suitepath = "test_scripts/undecorated_functional_tests.py:"
+
+    def setUp(self):
+        os.remove('nosetests.xml')
+        super(TestUndecoratedFunctionalXunit, self).setUp()
+
+    def tearDown(self):
+        with open('nosetests.xml') as xml:
+            assert_in('tests="2"', xml.read())
+        super(TestUndecoratedFunctionalXunit, self).tearDown()
 
     def runTest(self):
         self.check(['test_scripts.undecorated_functional_tests.test_x ... ok',

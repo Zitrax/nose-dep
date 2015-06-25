@@ -72,8 +72,8 @@ def depends(func=None, after=None, before=None):
 class DepLoader(TestLoader):
     """Loader that stores what was specified but still loads all tests"""
 
-    def __init__(self):
-        super(DepLoader, self).__init__()
+    def __init__(self, config=None, importer=None, workingDir=None, selector=None):
+        super(DepLoader, self).__init__(config, importer, workingDir, selector)
         self.tests = []
 
     def loadTestsFromName(self, name, module=None, discovered=False):
@@ -99,8 +99,8 @@ class NoseDep(Plugin):
     def configure(self, options, conf):
         super(self.__class__, self).configure(options, conf)
 
-    def prepareTestLoader(self, _):
-        self.loader = DepLoader()
+    def prepareTestLoader(self, loader):
+        self.loader = DepLoader(loader.config, loader.importer, loader.workingDir, loader.selector)
         return self.loader
 
     def orderTests(self, all_tests, test):
