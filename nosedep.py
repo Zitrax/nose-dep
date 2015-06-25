@@ -76,6 +76,7 @@ class DepLoader(TestLoader):
 
 
 class NoseDep(Plugin):
+    """Allow specifying test dependencies with the depends decorator."""
     name = "nosedep"
     score = 100
 
