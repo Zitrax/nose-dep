@@ -96,14 +96,8 @@ if __name__ == '__main__':
 
 
 # To test:
-# * No specifier
-# * Specifier for each functional test
-# * Specifier for method tests
 # * Multiple specifiers
-# * Make sure a test that is not part of any dependency chain is tested
 # * Test both with file and __main__ specifying prefix
-# * Verify that setup/teardown is run both for func and method tests
-# * Verify that each test only run a single time
 
 # FIXME: Dependencies are global and not qualified. Would probably be best if
 #        it contained unique qualifiers. (now we can't use the same test name in different files)
