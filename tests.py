@@ -56,6 +56,15 @@ class TestDecoratedFunctionalFunc(NoseDepPluginTester):
                     'test_scripts.decorated_functional_func.test_dff_c ... ok'])
 
 
+class TestDecoratedFunctionalMult(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_mult.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_mult.test_dfm_b ... ok',
+                    'test_scripts.decorated_functional_mult.test_dfm_c ... ok',
+                    'test_scripts.decorated_functional_mult.test_dfm_a ... ok'])
+
+
 class TestDecoratedFunctionalSpecificDep(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_functional_tests.py:test_d"
 
