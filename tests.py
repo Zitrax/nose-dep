@@ -1,5 +1,6 @@
 import unittest
 from nose.plugins import PluginTester
+from nose.tools import assert_in
 from nosedep import NoseDep
 
 
@@ -18,10 +19,13 @@ class NoseDepPluginTester(PluginTester, unittest.TestCase):
         raise Exception("Should not be used currently")
 
     def check(self, expect):
+        results = len(expect)
         for line in self.output:
             if expect:
                 self.assertEqual(line.strip(), expect.pop(0))
-
+        # Verify that we ran the expected number of tests
+        assert_in("Ran {} test{} in".format(results, 's' if results > 1 else ''),
+                  str(self.output))
 
 class TestUndecoratedFunctional(NoseDepPluginTester):
     suitepath = "test_scripts/undecorated_functional_tests.py:"
@@ -41,6 +45,15 @@ class TestDecoratedFunctionalAll(NoseDepPluginTester):
                     'test_scripts.decorated_functional_tests.test_a ... ok',
                     'test_scripts.decorated_functional_tests.test_c ... ok',
                     'test_scripts.decorated_functional_tests.test_d ... ok'])
+
+
+class TestDecoratedFunctionalFunc(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_func.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_func.test_dff_b ... ok',
+                    'test_scripts.decorated_functional_func.test_dff_a ... ok',
+                    'test_scripts.decorated_functional_func.test_dff_c ... ok'])
 
 
 class TestDecoratedFunctionalSpecificDep(NoseDepPluginTester):

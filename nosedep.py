@@ -47,12 +47,18 @@ def depends(func=None, after=None, before=None):
         if a == b:
             raise ValueError("Test '{}' cannot depend on itself".format(a))
 
-    if after:
-        self_check(func.__name__, after)
-        dependencies[func.__name__].add(after)
-    if before:
-        self_check(func.__name__, before)
-        dependencies[before].add(func.__name__)
+    def handle_dep(cond, _before=True):
+        if cond:
+            if hasattr(cond, '__call__'):
+                cond = cond.__name__
+            self_check(func.__name__, cond)
+            if _before:
+                dependencies[cond].add(func.__name__)
+            else:
+                dependencies[func.__name__].add(cond)
+
+    handle_dep(before)
+    handle_dep(after, False)
 
     @wraps(func)
     def inner(*args, **kwargs):
