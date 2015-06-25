@@ -111,6 +111,7 @@ if __name__ == '__main__':
 # To test:
 # * Multiple specifiers
 # * Test both with file and __main__ specifying prefix
+#   In the tested application use of __main__. tests all tests while filename prefix works.
 
 # FIXME: Dependencies are global and not qualified. Would probably be best if
 #        it contained unique qualifiers. (now we can't use the same test name in different files)
