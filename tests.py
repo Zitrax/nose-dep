@@ -46,7 +46,8 @@ class TestUndecoratedFunctionalXunit(NoseDepPluginTester):
     suitepath = "test_scripts/undecorated_functional_tests.py:"
 
     def setUp(self):
-        os.remove('nosetests.xml')
+        if os.path.isfile('nosetests.xml'):
+            os.remove('nosetests.xml')
         super(TestUndecoratedFunctionalXunit, self).setUp()
 
     def tearDown(self):
