@@ -1,11 +1,12 @@
-Nosetest plugin for test dependencies.
+## Nosetest plugin for test dependencies
 
-Normally tests should not depend on each other - and it should be avoided
-as long as possible. Optimally each test should be able to run in isolation.
+Normally tests should not depend on each other - and test dependencies should
+be avoided as long as possible. Optimally each test should be able to run
+in isolation.
 
 However there might be rare cases or special circumstances where one would
-want this. For example very slow integration tests where redoing what test
-A did just to run test B would simply be too costly. Or temporarily while
+need dependencies. For example very slow integration tests where redoing what
+test A did just to run test B would simply be too costly. Or temporarily while
 testing or debugging.
 
 The current implementation allows marking tests with the `@depends` decorator
