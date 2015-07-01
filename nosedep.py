@@ -3,27 +3,28 @@
 Normally tests should not depend on each other - and it should be avoided
 as long as possible. Optimally each test should be able to run in isolation.
 
-However there might be rare cases where one would want this. For example
-very slow integration tests where redoing what test A did just to run
-test B would simply be too costly. Or temporarily while testing or debugging.
+However there might be rare cases or special circumstances where one would
+want this. For example very slow integration tests where redoing what test
+A did just to run test B would simply be too costly. Or temporarily while
+testing or debugging.
 
 The current implementation allows marking tests with the @depends decorator
 where it can be declared if the test needs to run before or after some
-specific test(s).
+other specific test(s).
 
-Currently this just determines the test order, thus even if test B depends
-on test A and A failed B will still run. In the future we might want to
-skip test B and all other remaining tests in the affected dependency chain.
+There is also support for skipping tests based on the dependency results,
+thus if test B depends on test A and test A fails then B will be skipped
+with the reason that A failed.
 
-It do however support running the necessary dependencies for a single test,
+Nosedep also supports running the necessary dependencies for a single test,
 thus if you specify to run only test B and test B depends on A; then A will
 run before B to satisfy that dependency.
 """
 from itertools import chain
-
 import string
 from collections import defaultdict
 from functools import partial, wraps
+
 from nose.loader import TestLoader
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
@@ -72,6 +73,7 @@ def depends(func=None, after=None, before=None):
 class DepLoader(TestLoader):
     """Loader that stores what was specified but still loads all tests"""
 
+    # noinspection PyPep8Naming
     def __init__(self, config=None, importer=None, workingDir=None, selector=None):
         super(DepLoader, self).__init__(config, importer, workingDir, selector)
         self.tests = []
@@ -92,6 +94,8 @@ class NoseDep(Plugin):
     def __init__(self):
         super(NoseDep, self).__init__()
         self.loader = None
+        self.ok_results = set()
+        self.results = None
 
     def options(self, parser, env):
         super(self.__class__, self).options(parser, env)
@@ -104,6 +108,7 @@ class NoseDep(Plugin):
         return self.loader
 
     def orderTests(self, all_tests, test):
+        """Determine test ordering based on the dependency graph"""
         order = toposort_flatten(dependencies)
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
@@ -131,6 +136,7 @@ class NoseDep(Plugin):
         return test
 
     def prepareSuite(self, suite):
+        """Prepare suite and determine test ordering"""
         all_tests = {}
         for s in suite:
             all_tests[string.split(str(s), '.')[-1]] = s
@@ -138,6 +144,7 @@ class NoseDep(Plugin):
         return self.orderTests(all_tests, suite)
 
     def prepareTest(self, test):
+        """Prepare and determine test ordering"""
         all_tests = {}
         for t in test:
             for tt in t:
@@ -148,3 +155,50 @@ class NoseDep(Plugin):
                     all_tests[tt.test.test.__name__] = tt
 
         return self.orderTests(all_tests, test)
+
+    def dependency_failed(self, test):
+        """Returns an error string if any of the dependencies failed"""
+        for d in (self.test_name(i) for i in dependencies[test]):
+            if d in (self.test_name(str(t[0])) for t in self.results.failures):
+                return "Required test '{}' FAILED".format(d)
+            if d in (self.test_name(str(t[0])) for t in self.results.errors):
+                return "Required test '{}' ERRORED".format(d)
+            if d in (self.test_name(str(t[0])) for t in self.results.skipped):
+                return "Required test '{}' SKIPPED".format(d)
+        return None
+
+    def dependency_ran(self, test):
+        """Returns an error string if any of the dependencies did not run"""
+        for d in (self.test_name(i) for i in dependencies[test]):
+            if d not in self.ok_results:
+                return "Required test '{}' did not run (does it exist?)".format(d)
+        return None
+
+    def beforeTest(self, test):
+        """Skip or Error the test if the dependencies are not fulfilled"""
+        tn = self.test_name(test)
+        res = self.dependency_failed(tn)
+        if res:
+            test.test.skipTestNoseDep = partial(test.test.skipTest, res)
+            test.test._testMethodName = 'skipTestNoseDep'
+            return
+        res = self.dependency_ran(tn)
+        if res:
+            def error_test():
+                raise Exception(res)
+            test.test.errTestNoseDep = error_test
+            test.test._testMethodName = 'errTestNoseDep'
+
+    @staticmethod
+    def test_name(test):
+        # Internally we are currently only using the method/function names
+        # could be that we might want to use the full qualified name in the future
+        return str(test).split('.')[-1]
+
+    def addSuccess(self, test):
+        """The result object does not store successful results, so we have to do it"""
+        self.ok_results.add(self.test_name(test))
+
+    def prepareTestResult(self, result):
+        """Store the result object so we can inspect it in beforeTest"""
+        self.results = result

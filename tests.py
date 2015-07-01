@@ -1,15 +1,18 @@
 import os
 import unittest
+
 from nose.plugins import PluginTester
+from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
 from nose.tools import assert_in
+
 from nosedep import NoseDep
 
 
 class NoseDepPluginTester(PluginTester, unittest.TestCase):
     activate = '--with-nosedep'
     args = ['-v']
-    plugins = [NoseDep()]
+    plugins = [NoseDep(), Skip()]
 
     # This is a bit odd. If using the absolute path on Windows
     # it tries to import module 'C' due to the ':' , if only relative path
@@ -24,7 +27,7 @@ class NoseDepPluginTester(PluginTester, unittest.TestCase):
         results = len(expect)
         for line in self.output:
             if expect:
-                self.assertEqual(line.strip(), expect.pop(0))
+                self.assertEqual(expect.pop(0), line.strip())
         # Verify that we ran the expected number of tests
         assert_in("Ran {} test{} in".format(results, 's' if results > 1 else ''),
                   str(self.output))
@@ -70,6 +73,20 @@ class TestDecoratedFunctionalAll(NoseDepPluginTester):
                     'test_scripts.decorated_functional_tests.test_a ... ok',
                     'test_scripts.decorated_functional_tests.test_c ... ok',
                     'test_scripts.decorated_functional_tests.test_d ... ok'])
+
+
+class TestDecoratedFunctionalDepSkip(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_dep_skip.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_dep_skip.test_dfds_c ... ok',
+                    'test_scripts.decorated_functional_dep_skip.test_dfds_b ... FAIL',
+                    'test_scripts.decorated_functional_dep_skip.test_dfds_e ... SKIP: skippington',
+                    'test_scripts.decorated_functional_dep_skip.test_dfds_a ... SKIP:'
+                    ' Required test \'test_dfds_b\' FAILED',
+                    'test_scripts.decorated_functional_dep_skip.test_dfds_d ... ERROR',
+                    'test_scripts.decorated_functional_dep_skip.test_dfds_f ... SKIP:'
+                    ' Required test \'test_dfds_e\' SKIPPED'])
 
 
 class TestDecoratedFunctionalFunc(NoseDepPluginTester):
