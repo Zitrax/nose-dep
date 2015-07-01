@@ -41,6 +41,10 @@ def depends(func=None, after=None, before=None):
     """
     if not after and not before:
         raise ValueError("depends decorator needs at least one argument")
+
+    # This avoids some nesting in the decorator
+    # If called without func the decorator was called with optional args
+    # so we'll return a function with those args filled in.
     if func is None:
         return partial(depends, after=after, before=before)
 
