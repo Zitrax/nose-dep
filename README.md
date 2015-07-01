@@ -8,7 +8,7 @@ want this. For example very slow integration tests where redoing what test
 A did just to run test B would simply be too costly. Or temporarily while
 testing or debugging.
 
-The current implementation allows marking tests with the @depends decorator
+The current implementation allows marking tests with the `@depends` decorator
 where it can be declared if the test needs to run before or after some
 other specific test(s).
 
