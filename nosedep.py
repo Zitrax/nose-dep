@@ -24,6 +24,7 @@ from itertools import chain
 import string
 from collections import defaultdict
 from functools import partial, wraps
+import sys
 
 from nose.loader import TestLoader
 from nose.plugins import Plugin
@@ -150,13 +151,19 @@ class NoseDep(Plugin):
     def prepareTest(self, test):
         """Prepare and determine test ordering"""
         all_tests = {}
-        for t in test:
-            for tt in t:
-                if isinstance(tt, ContextSuite):  # MethodTestCase
-                    all_tests[tt.context.__name__] = self.prepareSuite(tt)
-                    setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
-                else:  # FunctionTestCase
-                    all_tests[tt.test.test.__name__] = tt
+        try:
+            for t in test:
+                for tt in t:
+                    if isinstance(tt, ContextSuite):  # MethodTestCase
+                        all_tests[tt.context.__name__] = self.prepareSuite(tt)
+                        setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
+                    else:  # FunctionTestCase
+                        all_tests[tt.test.test.__name__] = tt
+        except AttributeError as e:
+            # This exception is confusing by default - add some further info
+            t, v, tb = sys.exc_info()
+            v = AttributeError(e.message + " - Due to: " + str(tt))
+            raise t, v, tb
 
         return self.orderTests(all_tests, test)
 
