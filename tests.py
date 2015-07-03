@@ -155,6 +155,35 @@ class TestDecoratedMethodSpecificDep(NoseDepPluginTester):
                     'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
 
 
+class TestDecoratedFunctionalPriority(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_priority.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_priority.test_dfp_b ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_c ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_a ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_f ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_g ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_h ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_i ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_d ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_e ... ok'])
+
+
+class TestDecoratedMethodPriority(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_priority.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_method_priority.TestMP.test_dmp_b ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_c ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_a ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_f ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_g ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_h ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_i ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_d ... ok',
+                    'test_scripts.decorated_method_priority.TestMP.test_dmp_e ... ok'])
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -6,7 +6,8 @@ as long as possible. Optimally each test should be able to run in isolation.
 However there might be rare cases or special circumstances where one would
 want this. For example very slow integration tests where redoing what test
 A did just to run test B would simply be too costly. Or temporarily while
-testing or debugging.
+testing or debugging. It's also possible that one wants some test to run first
+as 'smoke tests' such that the rest can be skipped if those tests fail.
 
 The current implementation allows marking tests with the @depends decorator
 where it can be declared if the test needs to run before or after some
@@ -19,6 +20,17 @@ with the reason that A failed.
 Nosedep also supports running the necessary dependencies for a single test,
 thus if you specify to run only test B and test B depends on A; then A will
 run before B to satisfy that dependency.
+
+Finally there is prioritization support. Each test can be given an integer priority
+and the tests will run in order from lowest to highest. Dependencies take
+precedence of course so in total the ordering will be:
+
+1: All tests that are not part of any dependency chain ordered first by priority
+   then by name.
+2: Priority groups in order, while each priority group is internally ordered
+   the same as point 1.
+
+Default priority if not specified is 50.
 """
 from itertools import chain
 import string
@@ -29,25 +41,26 @@ import sys
 from nose.loader import TestLoader
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
-from toposort import toposort_flatten
+from toposort import toposort_flatten, toposort
 
 dependencies = defaultdict(set)
+priorities = defaultdict(lambda: 50)
 
 
-def depends(func=None, after=None, before=None):
+def depends(func=None, after=None, before=None, priority=None):
     """Decorator to specify test dependencies
 
     :param after: The test needs to run after this/these tests. String or list of strings.
     :param before: The test needs to run before this/these tests. String or list of strings.
     """
-    if not after and not before:
+    if not (after or before or priority):
         raise ValueError("depends decorator needs at least one argument")
 
     # This avoids some nesting in the decorator
     # If called without func the decorator was called with optional args
     # so we'll return a function with those args filled in.
     if func is None:
-        return partial(depends, after=after, before=before)
+        return partial(depends, after=after, before=before, priority=priority)
 
     def self_check(a, b):
         if a == b:
@@ -68,6 +81,9 @@ def depends(func=None, after=None, before=None):
 
     handle_dep(before)
     handle_dep(after, False)
+
+    if priority:
+        priorities[func.__name__] = priority
 
     @wraps(func)
     def inner(*args, **kwargs):
@@ -114,7 +130,15 @@ class NoseDep(Plugin):
 
     def orderTests(self, all_tests, test):
         """Determine test ordering based on the dependency graph"""
-        order = toposort_flatten(dependencies)
+
+        order = []
+        # First do a topological sorting based on the before,after dependencies
+        # Then sort the different dependency groups based on the priorities
+        for g in toposort(dependencies):
+            for t in sorted(g, key=lambda x: (priorities[x], x)):
+                order.append(t)
+
+        ordered_all_tests = sorted(all_tests.keys(), key=lambda x: (priorities[x], x))
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
@@ -130,12 +154,12 @@ class NoseDep(Plugin):
             def should_test(t):
                 return t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
 
-            no_deps = (all_tests[t] for t in all_tests.keys() if t not in order and should_test(t))
+            no_deps = (all_tests[t] for t in ordered_all_tests if t not in order and should_test(t))
             deps = (all_tests[t] for t in order if should_test(t))
 
             test._tests = chain(no_deps, deps)
         else:  # If we should run all tests
-            no_deps = (all_tests[t] for t in sorted(all_tests.keys()) if t not in order)
+            no_deps = (all_tests[t] for t in ordered_all_tests if t not in order)
             deps = (all_tests[t] for t in order if t in all_tests)
             test._tests = chain(no_deps, deps)
         return test
