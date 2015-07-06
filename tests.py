@@ -4,9 +4,9 @@ import unittest
 from nose.plugins import PluginTester
 from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
-from nose.tools import assert_in
+from nose.tools import assert_in, assert_raises_regexp
 
-from nosedep import NoseDep
+from nosedep import NoseDep, depends
 
 
 class NoseDepPluginTester(PluginTester, unittest.TestCase):
@@ -183,6 +183,33 @@ class TestDecoratedMethodPriority(NoseDepPluginTester):
                     'test_scripts.decorated_method_priority.TestMP.test_dmp_i ... ok',
                     'test_scripts.decorated_method_priority.TestMP.test_dmp_d ... ok',
                     'test_scripts.decorated_method_priority.TestMP.test_dmp_e ... ok'])
+
+
+class TestDependsNoArgument(NoseDepPluginTester):
+    def test_no_args(self):
+        pass
+
+    def makeSuite(self):
+        with assert_raises_regexp(ValueError, r'depends decorator needs at least one argument'):
+            class TC(unittest.TestCase):
+                @depends()
+                def run_test_no_args(self):
+                    pass
+            return [TC('run_test_no_args')]
+
+
+class TestDependsSelf(NoseDepPluginTester):
+    def test_self_dep(self):
+        pass
+
+    def makeSuite(self):
+        with assert_raises_regexp(ValueError, r'Test \'run_test_self_dep\' cannot depend on itself'):
+            class TC(unittest.TestCase):
+                @depends(after='run_test_self_dep')
+                def run_test_self_dep(self):
+                    pass
+            return [TC('run_test_self_dep')]
+
 
 if __name__ == '__main__':
     unittest.main()
