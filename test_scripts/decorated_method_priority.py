@@ -1,5 +1,6 @@
 from nosedep import depends
 
+
 class TestMP(object):
     @depends(priority=2)
     def test_dmp_a(self):

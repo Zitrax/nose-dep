@@ -41,7 +41,7 @@ import sys
 from nose.loader import TestLoader
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
-from toposort import toposort_flatten, toposort
+from toposort import toposort
 
 dependencies = defaultdict(set)
 priorities = defaultdict(lambda: 50)
@@ -175,20 +175,19 @@ class NoseDep(Plugin):
     def prepareTest(self, test):
         """Prepare and determine test ordering"""
         all_tests = {}
-        try:
-            for t in test:
-                for tt in t:
+        for t in test:
+            for tt in t:
+                try:
                     if isinstance(tt, ContextSuite):  # MethodTestCase
                         all_tests[tt.context.__name__] = self.prepareSuite(tt)
                         setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
                     else:  # FunctionTestCase
                         all_tests[tt.test.test.__name__] = tt
-        except AttributeError as e:
-            # This exception is confusing by default - add some further info
-            t, v, tb = sys.exc_info()
-            v = AttributeError(e.message + " - Due to: " + str(tt))
-            raise t, v, tb
-
+                except AttributeError as e:
+                    # This exception is confusing by default - add some further info
+                    t, v, tb = sys.exc_info()
+                    v = AttributeError(e.message + " - Due to: " + str(tt))
+                    raise t, v, tb
         return self.orderTests(all_tests, test)
 
     def dependency_failed(self, test):
