@@ -33,5 +33,4 @@ precedence of course so in total the ordering will be:
 
 Default priority if not specified is 50.
 
-# TODO: Soft dependencies
 # TODO: Strict roles such as "smoke" that cause everything to be skipped if it's not ok

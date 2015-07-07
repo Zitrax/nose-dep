@@ -8,7 +8,6 @@ class TestNoseDecoratedMethod(object):
 
     @classmethod
     def reset(cls):
-        print "RESET"
         cls.did_setup_class = False
         cls.did_teardown_class = False
 

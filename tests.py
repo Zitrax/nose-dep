@@ -151,8 +151,7 @@ class TestDecoratedMethodSpecificDep(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_method_tests.py:TestNoseDecoratedMethod.test_cd_b"
 
     def runTest(self):
-        self.check(['test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_c ... ok',
-                    'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
+        self.check(['test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
 
 
 class TestDecoratedFunctionalPriority(NoseDepPluginTester):

@@ -21,9 +21,32 @@ Nosedep also supports running the necessary dependencies for a single test,
 thus if you specify to run only test B and test B depends on A; then A will
 run before B to satisfy that dependency.
 
+Note that 'before' dependencies are treated as soft. A soft dependency will only
+affect the test ordering, not force inclusion. For example if we have::
+
+    def test_a:
+      pass
+
+    @depends(before=test_a)
+    def test_b:
+      pass
+
+and run all tests they would run in the order b,a. If you specify to run only
+either one of them only that test would run. However changing it to::
+
+    @depends(after=test_b)
+    def test_a:
+      pass
+
+    def test_b:
+      pass
+
+would affect the case when you specify to run only test a, since it would have
+to run test b first to specify the 'after' dependency since it's a 'hard' dependency.
+
 Finally there is prioritization support. Each test can be given an integer priority
 and the tests will run in order from lowest to highest. Dependencies take
-precedence of course so in total the ordering will be:
+precedence so in total the ordering will be:
 
 1: All tests that are not part of any dependency chain ordered first by priority
    then by name.
@@ -44,6 +67,7 @@ from nose.suite import ContextSuite
 from toposort import toposort
 
 dependencies = defaultdict(set)
+soft_dependencies = defaultdict(set)
 priorities = defaultdict(lambda: 50)
 
 
@@ -75,7 +99,7 @@ def depends(func=None, after=None, before=None, priority=None):
                     cond = cond.__name__
                 self_check(func.__name__, cond)
                 if _before:
-                    dependencies[cond].add(func.__name__)
+                    soft_dependencies[cond].add(func.__name__)
                 else:
                     dependencies[func.__name__].add(cond)
 
@@ -107,6 +131,13 @@ class DepLoader(TestLoader):
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
 
 
+def merge_dicts(d1, d2):
+    d3 = defaultdict(set)
+    for k, v in chain(d1.iteritems(), d2.iteritems()):
+        d3[k] |= v
+    return d3
+
+
 class NoseDep(Plugin):
     """Allow specifying test dependencies with the depends decorator."""
     name = "nosedep"
@@ -128,16 +159,19 @@ class NoseDep(Plugin):
         self.loader = DepLoader(loader.config, loader.importer, loader.workingDir, loader.selector)
         return self.loader
 
-    def orderTests(self, all_tests, test):
-        """Determine test ordering based on the dependency graph"""
-
+    @staticmethod
+    def order_tests():
         order = []
         # First do a topological sorting based on the before,after dependencies
         # Then sort the different dependency groups based on the priorities
-        for g in toposort(dependencies):
+        for g in toposort(merge_dicts(dependencies, soft_dependencies)):
             for t in sorted(g, key=lambda x: (priorities[x], x)):
                 order.append(t)
+        return order
 
+    def orderTests(self, all_tests, test):
+        """Determine test ordering based on the dependency graph"""
+        order = self.order_tests()
         ordered_all_tests = sorted(all_tests.keys(), key=lambda x: (priorities[x], x))
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
@@ -156,7 +190,6 @@ class NoseDep(Plugin):
 
             no_deps = (all_tests[t] for t in ordered_all_tests if t not in order and should_test(t))
             deps = (all_tests[t] for t in order if should_test(t))
-
             test._tests = chain(no_deps, deps)
         else:  # If we should run all tests
             no_deps = (all_tests[t] for t in ordered_all_tests if t not in order)
