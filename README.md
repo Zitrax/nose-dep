@@ -49,11 +49,13 @@ Finally there is prioritization support. Each test can be given an integer prior
 and the tests will run in order from lowest to highest. Dependencies take
 precedence of course so in total the ordering will be:
 
-1: All tests that are not part of any dependency chain ordered first by priority
+1. All tests that are not part of any dependency chain ordered first by priority
    then by name.
-2: Priority groups in order, while each priority group is internally ordered
+2. Priority groups in order, while each priority group is internally ordered
    the same as point 1.
 
 Default priority if not specified is 50.
 
-# TODO: Strict roles such as "smoke" that cause everything to be skipped if it's not ok
+## TODO
+
+* Strict roles such as "smoke" that cause everything to be skipped if it's not ok
