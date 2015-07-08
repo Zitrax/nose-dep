@@ -67,12 +67,12 @@ class TestDecoratedFunctionalAll(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_functional_tests.py:"
 
     def runTest(self):
-        self.check(['test_scripts.decorated_functional_tests.test_f ... ok',
-                    'test_scripts.decorated_functional_tests.test_b ... ok',
-                    'test_scripts.decorated_functional_tests.test_e ... ok',
-                    'test_scripts.decorated_functional_tests.test_a ... ok',
-                    'test_scripts.decorated_functional_tests.test_c ... ok',
-                    'test_scripts.decorated_functional_tests.test_d ... ok'])
+        self.check(['test_scripts.decorated_functional_tests.test_dft_f ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_b ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_e ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_a ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_c ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_d ... ok'])
 
 
 class TestDecoratedFunctionalDepSkip(NoseDepPluginTester):
@@ -108,19 +108,27 @@ class TestDecoratedFunctionalMult(NoseDepPluginTester):
 
 
 class TestDecoratedFunctionalSpecificDep(NoseDepPluginTester):
-    suitepath = "test_scripts/decorated_functional_tests.py:test_d"
+    suitepath = "test_scripts/decorated_functional_tests.py:test_dft_d"
 
     def runTest(self):
-        self.check(['test_scripts.decorated_functional_tests.test_b ... ok',
-                    'test_scripts.decorated_functional_tests.test_a ... ok',
-                    'test_scripts.decorated_functional_tests.test_d ... ok'])
+        self.check(['test_scripts.decorated_functional_tests.test_dft_b ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_a ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_d ... ok'])
 
 
 class TestDecoratedFunctionalSpecificNoDep(NoseDepPluginTester):
-    suitepath = "test_scripts/decorated_functional_tests.py:test_f"
+    suitepath = "test_scripts/decorated_functional_tests.py:test_dft_f"
 
     def runTest(self):
-        self.check(['test_scripts.decorated_functional_tests.test_f ... ok'])
+        self.check(['test_scripts.decorated_functional_tests.test_dft_f ... ok'])
+
+
+class TestDecoratedFunctionalSpecificC(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_functional_tests.py:test_dft_c"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_functional_tests.test_dft_b ... ok',
+                    'test_scripts.decorated_functional_tests.test_dft_c ... ok'])
 
 
 class TestUndecoratedMethod(NoseDepPluginTester):

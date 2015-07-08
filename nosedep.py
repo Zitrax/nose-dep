@@ -160,10 +160,12 @@ class NoseDep(Plugin):
         return self.loader
 
     @staticmethod
-    def order_tests():
+    def calculate_dependencies():
+        """Calculate test dependencies
+        First do a topological sorting based on the dependencies.
+        Then sort the different dependency groups based on priorities.
+        """
         order = []
-        # First do a topological sorting based on the before,after dependencies
-        # Then sort the different dependency groups based on the priorities
         for g in toposort(merge_dicts(dependencies, soft_dependencies)):
             for t in sorted(g, key=lambda x: (priorities[x], x)):
                 order.append(t)
@@ -171,7 +173,7 @@ class NoseDep(Plugin):
 
     def orderTests(self, all_tests, test):
         """Determine test ordering based on the dependency graph"""
-        order = self.order_tests()
+        order = self.calculate_dependencies()
         ordered_all_tests = sorted(all_tests.keys(), key=lambda x: (priorities[x], x))
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
@@ -197,7 +199,7 @@ class NoseDep(Plugin):
             test._tests = chain(no_deps, deps)
         return test
 
-    def prepareSuite(self, suite):
+    def prepare_suite(self, suite):
         """Prepare suite and determine test ordering"""
         all_tests = {}
         for s in suite:
@@ -212,7 +214,7 @@ class NoseDep(Plugin):
             for tt in t:
                 try:
                     if isinstance(tt, ContextSuite):  # MethodTestCase
-                        all_tests[tt.context.__name__] = self.prepareSuite(tt)
+                        all_tests[tt.context.__name__] = self.prepare_suite(tt)
                         setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
                     else:  # FunctionTestCase
                         all_tests[tt.test.test.__name__] = tt
