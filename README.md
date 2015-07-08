@@ -22,6 +22,29 @@ Nosedep also supports running the necessary dependencies for a single test,
 thus if you specify to run only test B and test B depends on A; then A will
 run before B to satisfy that dependency.
 
+Note that 'before' dependencies are treated as soft. A soft dependency will only
+affect the test ordering, not force inclusion. For example if we have::
+
+    def test_a:
+      pass
+
+    @depends(before=test_a)
+    def test_b:
+      pass
+
+and run all tests they would run in the order b,a. If you specify to run only
+either one of them only that test would run. However changing it to::
+
+    @depends(after=test_b)
+    def test_a:
+      pass
+
+    def test_b:
+      pass
+
+would affect the case when you specify to run only test a, since it would have
+to run test b first to specify the 'after' dependency since it's a 'hard' dependency.
+
 Finally there is prioritization support. Each test can be given an integer priority
 and the tests will run in order from lowest to highest. Dependencies take
 precedence of course so in total the ordering will be:
