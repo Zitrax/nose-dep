@@ -9,7 +9,7 @@ A did just to run test B would simply be too costly. Or temporarily while
 testing or debugging. It's also possible that one wants some test to run first
 as 'smoke tests' such that the rest can be skipped if those tests fail.
 
-The current implementation allows marking tests with the @depends decorator
+The current implementation allows marking tests with the `@depends` decorator
 where it can be declared if the test needs to run before or after some
 other specific test(s).
 
