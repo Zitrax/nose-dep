@@ -48,11 +48,11 @@ Finally there is prioritization support. Each test can be given an integer prior
 and the tests will run in order from lowest to highest. Dependencies take
 precedence so in total the ordering will be:
 
-1: All tests with a priority lower or equal to the default that are not part of any
+1. All tests with a priority lower or equal to the default that are not part of any
    dependency chain ordered first by priority then by name.
-2: Priority groups in order, while each priority group is internally ordered
+2. Priority groups in order, while each priority group is internally ordered
    the same as point 1.
-3: All tests with priority higher than the default that are not part of any
+3. All tests with priority higher than the default that are not part of any
    dependency chain ordered first by priority then by name.
 
 Default priority if not specified is 50.
