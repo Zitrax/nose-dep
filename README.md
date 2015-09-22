@@ -1,12 +1,11 @@
-## Nosetest plugin for test dependencies
+## Nosetest plugin for test dependencies.
 
-Normally tests should not depend on each other - and test dependencies should
-be avoided as long as possible. Optimally each test should be able to run
-in isolation.
+Normally tests should not depend on each other - and it should be avoided
+as long as possible. Optimally each test should be able to run in isolation.
 
 However there might be rare cases or special circumstances where one would
-need dependencies. For example very slow integration tests where redoing what
-test A did just to run test B would simply be too costly. Or temporarily while
+want this. For example very slow integration tests where redoing what test
+A did just to run test B would simply be too costly. Or temporarily while
 testing or debugging. It's also possible that one wants some test to run first
 as 'smoke tests' such that the rest can be skipped if those tests fail.
 
@@ -47,12 +46,14 @@ to run test b first to specify the 'after' dependency since it's a 'hard' depend
 
 Finally there is prioritization support. Each test can be given an integer priority
 and the tests will run in order from lowest to highest. Dependencies take
-precedence of course so in total the ordering will be:
+precedence so in total the ordering will be:
 
-1. All tests that are not part of any dependency chain ordered first by priority
-   then by name.
+1. All tests with a priority lower or equal to the default that are not part of any
+   dependency chain ordered first by priority then by name.
 2. Priority groups in order, while each priority group is internally ordered
    the same as point 1.
+3. All tests with priority higher than the default that are not part of any
+   dependency chain ordered first by priority then by name.
 
 Default priority if not specified is 50.
 
