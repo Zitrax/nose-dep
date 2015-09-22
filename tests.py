@@ -167,14 +167,14 @@ class TestDecoratedFunctionalPriority(NoseDepPluginTester):
 
     def runTest(self):
         self.check(['test_scripts.decorated_functional_priority.test_dfp_b ... ok',
-                    'test_scripts.decorated_functional_priority.test_dfp_c ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_a ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_f ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_g ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_h ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_i ... ok',
                     'test_scripts.decorated_functional_priority.test_dfp_d ... ok',
-                    'test_scripts.decorated_functional_priority.test_dfp_e ... ok'])
+                    'test_scripts.decorated_functional_priority.test_dfp_e ... ok',
+                    'test_scripts.decorated_functional_priority.test_dfp_c ... ok'])
 
 
 class TestDecoratedMethodPriority(NoseDepPluginTester):

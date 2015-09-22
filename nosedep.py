@@ -48,14 +48,16 @@ Finally there is prioritization support. Each test can be given an integer prior
 and the tests will run in order from lowest to highest. Dependencies take
 precedence so in total the ordering will be:
 
-1: All tests that are not part of any dependency chain ordered first by priority
-   then by name.
+1: All tests with a priority lower or equal to the default that are not part of any
+   dependency chain ordered first by priority then by name.
 2: Priority groups in order, while each priority group is internally ordered
    the same as point 1.
+3: All tests with priority higher than the default that are not part of any
+   dependency chain ordered first by priority then by name.
 
 Default priority if not specified is 50.
 """
-from itertools import chain
+from itertools import chain, tee
 import string
 from collections import defaultdict
 from functools import partial, wraps
@@ -68,7 +70,8 @@ from toposort import toposort
 
 dependencies = defaultdict(set)
 soft_dependencies = defaultdict(set)
-priorities = defaultdict(lambda: 50)
+default_priority = 50
+priorities = defaultdict(lambda: default_priority)
 
 
 def depends(func=None, after=None, before=None, priority=None):
@@ -138,6 +141,16 @@ def merge_dicts(d1, d2):
     return d3
 
 
+def split_on_condition(seq, condition):
+    """Split a sequence into two iterables without looping twice"""
+    l1, l2 = tee((condition(item), item) for item in seq)
+    return (i for p, i in l1 if p), (i for p, i in l2 if not p)
+
+
+def lo_prio(x):
+    return priorities[x] <= default_priority
+
+
 class NoseDep(Plugin):
     """Allow specifying test dependencies with the depends decorator."""
     name = "nosedep"
@@ -175,6 +188,7 @@ class NoseDep(Plugin):
         """Determine test ordering based on the dependency graph"""
         order = self.calculate_dependencies()
         ordered_all_tests = sorted(all_tests.keys(), key=lambda x: (priorities[x], x))
+        conds = [lambda t: True, lambda t: t in all_tests]
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
                 if t in dependencies:
@@ -187,16 +201,12 @@ class NoseDep(Plugin):
                     setattr(all_tests[t], 'nosedep_run', True)
                     mark_deps(t)
 
-            def should_test(t):
-                return t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
+            conds[0] = conds[1] = lambda t: t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
 
-            no_deps = (all_tests[t] for t in ordered_all_tests if t not in order and should_test(t))
-            deps = (all_tests[t] for t in order if should_test(t))
-            test._tests = chain(no_deps, deps)
-        else:  # If we should run all tests
-            no_deps = (all_tests[t] for t in ordered_all_tests if t not in order)
-            deps = (all_tests[t] for t in order if t in all_tests)
-            test._tests = chain(no_deps, deps)
+        no_deps = (t for t in ordered_all_tests if t not in order and conds[0](t))
+        deps = (t for t in order if conds[1](t))
+        no_deps_l, no_deps_h = split_on_condition(no_deps, lo_prio)
+        test._tests = (all_tests[t] for t in chain(no_deps_l, deps, no_deps_h))
         return test
 
     def prepare_suite(self, suite):

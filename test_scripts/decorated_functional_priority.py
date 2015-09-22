@@ -1,4 +1,4 @@
-from nosedep import depends
+from nosedep import depends, default_priority
 
 
 @depends(priority=2)
@@ -11,7 +11,9 @@ def test_dfp_b():
     pass
 
 
-@depends(priority=3)
+# Setting priority above the default to force this
+# to be tested last.
+@depends(priority=default_priority+1)
 def test_dfp_c():
     pass
 
