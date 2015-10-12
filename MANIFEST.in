@@ -1,0 +1,4 @@
+include *.md
+include *.py
+include *.txt
+recursive-include test_scripts *.py
