@@ -3,7 +3,7 @@ from setuptools import setup
 setup_args = dict(
     name='nosedep',
     version='0.1',
-    url='https://bitbucket.org/Zitrax/nose-dep',
+    url='https://github.com/Zitrax/nose-dep',
     maintainer='Daniel Bengtsson',
     maintainer_email='daniel@bengtssons.info',
     description='Nose test dependency support',
