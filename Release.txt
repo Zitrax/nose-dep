@@ -1,0 +1,8 @@
+Some notes for releasing:
+
+* Useful guide here: https://hynek.me/articles/sharing-your-labor-of-love-pypi-quick-and-dirty/
+
+But after all that is done it should now be as simple as:
+
+* python setup.py sdist bdist_wheel
+* twine upload -s dist/*
