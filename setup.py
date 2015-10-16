@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup_args = dict(
     name='nosedep',
-    version='0.1',
+    version='0.2',
     url='https://github.com/Zitrax/nose-dep',
     maintainer='Daniel Bengtsson',
     maintainer_email='daniel@bengtssons.info',
@@ -19,5 +19,8 @@ setup_args = dict(
     )
 
 if __name__ == '__main__':
-    setup(install_requires=['nose', 'toposort'],
+    with open('requirements.txt') as f:
+        required = f.read().splitlines()
+
+    setup(install_requires=required,
           **setup_args)
