@@ -57,6 +57,12 @@ precedence so in total the ordering will be:
 
 Default priority if not specified is 50.
 
+## Info
+
+* [![Code Quality](https://landscape.io/github/Zitrax/node-dep/master/landscape.png)](https://landscape.io/github/Zitrax/node-dep/master)
+* [![Build Status](https://travis-ci.org/Zitrax/nose-dep.svg?branch=master)](https://travis-ci.org/Zitrax/nose-dep)
+* [![Coverage Status](https://coveralls.io/repos/Zitrax/nose-dep/badge.svg?branch=master&service=github)](https://coveralls.io/github/Zitrax/nose-dep?branch=master)
+
 ## TODO
 
 * Strict roles such as "smoke" that cause everything to be skipped if it's not ok
