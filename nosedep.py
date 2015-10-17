@@ -58,7 +58,6 @@ precedence so in total the ordering will be:
 Default priority if not specified is 50.
 """
 from itertools import chain, tee
-import string
 from collections import defaultdict
 from functools import partial, wraps
 import sys
@@ -66,6 +65,7 @@ import sys
 from nose.loader import TestLoader
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
+from setuptools.compat import reraise
 from toposort import toposort
 
 dependencies = defaultdict(set)
@@ -95,7 +95,7 @@ def depends(func=None, after=None, before=None, priority=None):
 
     def handle_dep(conditions, _before=True):
         if conditions:
-            if not hasattr(conditions, '__iter__'):
+            if type(conditions) is not list:
                 conditions = [conditions]
             for cond in conditions:
                 if hasattr(cond, '__call__'):
@@ -128,7 +128,7 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-        parts = string.split(name, ':' if ':' in name else '.')
+        parts = name.split(':' if ':' in name else '.')
         if len(parts) == 2 and parts[1]:
             self.tests.append(parts[-1].split('.')[-1])
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
@@ -136,7 +136,7 @@ class DepLoader(TestLoader):
 
 def merge_dicts(d1, d2):
     d3 = defaultdict(set)
-    for k, v in chain(d1.iteritems(), d2.iteritems()):
+    for k, v in chain(iter(d1.items()), iter(d2.items())):
         d3[k] |= v
     return d3
 
@@ -187,7 +187,7 @@ class NoseDep(Plugin):
     def orderTests(self, all_tests, test):
         """Determine test ordering based on the dependency graph"""
         order = self.calculate_dependencies()
-        ordered_all_tests = sorted(all_tests.keys(), key=lambda x: (priorities[x], x))
+        ordered_all_tests = sorted(list(all_tests.keys()), key=lambda x: (priorities[x], x))
         conds = [lambda t: True, lambda t: t in all_tests]
         if self.loader.tests:  # If specific tests were mentioned on the command line
             def mark_deps(t):
@@ -213,7 +213,7 @@ class NoseDep(Plugin):
         """Prepare suite and determine test ordering"""
         all_tests = {}
         for s in suite:
-            all_tests[string.split(str(s), '.')[-1]] = s
+            all_tests[str(s).split('.')[-1]] = s
 
         return self.orderTests(all_tests, suite)
 
@@ -231,8 +231,8 @@ class NoseDep(Plugin):
                 except AttributeError as e:
                     # This exception is confusing by default - add some further info
                     t, v, tb = sys.exc_info()
-                    v = AttributeError(e.message + " - Due to: " + str(tt))
-                    raise t, v, tb
+                    v = AttributeError(str(e) + " - Due to: " + str(tt))
+                    reraise(t, v, tb)
         return self.orderTests(all_tests, test)
 
     def dependency_failed(self, test):
