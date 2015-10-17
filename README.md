@@ -57,6 +57,8 @@ precedence so in total the ordering will be:
 
 Default priority if not specified is 50.
 
+*Note: Currently no support for Python 2.6 and 3.2. Should work for 2.7 and 3.3+.*
+
 ## Info
 
 * [![Code Quality](https://landscape.io/github/Zitrax/node-dep/master/landscape.png)](https://landscape.io/github/Zitrax/node-dep/master)

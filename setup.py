@@ -15,7 +15,15 @@ setup_args = dict(
         'nose.plugins.0.10': [
             'nosedep = nosedep:NoseDep'
             ]
-        }
+        },
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Testing',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5'
+    ]
     )
 
 if __name__ == '__main__':
