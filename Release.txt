@@ -5,4 +5,4 @@ Some notes for releasing:
 But after all that is done it should now be as simple as:
 
 * python setup.py sdist bdist_wheel
-* twine upload -s dist/*
+* twine upload dist/*
