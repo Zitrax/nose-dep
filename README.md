@@ -61,7 +61,7 @@ Default priority if not specified is 50.
 
 ## Info
 
-[![Code Quality](https://img.shields.io/pypi/v/nosedep.svg)](https://pypi.python.org/pypi/nosedep)
+[![PyPI version](https://badge.fury.io/py/nosedep.svg)](https://pypi.python.org/pypi/nosedep)
 [![Code Health](https://landscape.io/github/Zitrax/nose-dep/master/landscape.svg?style=flat)](https://landscape.io/github/Zitrax/nose-dep/master)
 [![Build Status](https://travis-ci.org/Zitrax/nose-dep.svg?branch=master)](https://travis-ci.org/Zitrax/nose-dep)
 [![Coverage Status](https://coveralls.io/repos/Zitrax/nose-dep/badge.svg?branch=master&service=github)](https://coveralls.io/github/Zitrax/nose-dep?branch=master)
