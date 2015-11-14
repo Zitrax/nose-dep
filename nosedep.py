@@ -128,7 +128,7 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-        parts = name.split(':' if ':' in name else '.')
+        parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
         if len(parts) == 2 and parts[1]:
             self.tests.append(parts[-1].split('.')[-1])
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
