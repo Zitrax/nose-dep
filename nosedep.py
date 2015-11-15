@@ -57,10 +57,14 @@ precedence so in total the ordering will be:
 
 Default priority if not specified is 50.
 """
-from itertools import chain, tee
+import imp
+import inspect
+import os
+import re
+import sys
 from collections import defaultdict
 from functools import partial, wraps
-import sys
+from itertools import chain, tee
 
 from nose.loader import TestLoader
 from nose.plugins import Plugin
@@ -118,6 +122,31 @@ def depends(func=None, after=None, before=None, priority=None):
     return inner
 
 
+def import_from_uri(uri, absl=True):
+    if not absl:
+        uri = os.path.normpath(os.path.join(os.path.dirname(__file__), uri))
+    path, fname = os.path.split(uri)
+    mname, ext = os.path.splitext(fname)
+    no_ext = os.path.join(path, mname)
+    if os.path.exists(no_ext + '.pyc'):
+        try:
+            return imp.load_compiled(mname, no_ext + '.pyc')
+        except ImportError:
+            pass
+    if os.path.exists(no_ext + '.py'):
+        try:
+            return imp.load_source(mname, no_ext + '.py')
+        except ImportError:
+            pass
+
+
+def has_class(file_name, class_name):
+    mod = import_from_uri(file_name)
+    if not mod:
+        return False
+    return bool(inspect.getmembers(mod, lambda o: inspect.isclass(o) and o.__name__ == class_name))
+
+
 class DepLoader(TestLoader):
     """Loader that stores what was specified but still loads all tests"""
 
@@ -128,9 +157,14 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
+
+        # Would have been nice to use nose.util.split_test_name(name) here
+        # but for some reason it cause an recursive loop of test loading
+        # Need to investigate further why that happens
         parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
         if len(parts) == 2 and parts[1]:
-            self.tests.append(parts[-1].split('.')[-1])
+            if not has_class(parts[0], parts[1]):
+                self.tests.append(parts[-1].split('.')[-1])
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
 
 
@@ -213,7 +247,12 @@ class NoseDep(Plugin):
         """Prepare suite and determine test ordering"""
         all_tests = {}
         for s in suite:
-            all_tests[str(s).split('.')[-1]] = s
+            m = re.match('(\w+)\s+\(.+\)', str(s))
+            if m:
+                name = m.group(1)
+            else:
+                name = str(s).split('.')[-1]
+            all_tests[name] = s
 
         return self.orderTests(all_tests, suite)
 

@@ -63,6 +63,44 @@ class TestUndecoratedFunctionalXunit(NoseDepPluginTester):
                     'test_scripts.undecorated_functional_tests.test_y ... ERROR'])
 
 
+class TestSimple(NoseDepPluginTester):
+    suitepath = "test_scripts/simple.py"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple.TestSimple) ... FAIL',
+                    'test_simple_ok (test_scripts.simple.TestSimple) ... ok'])
+
+
+class TestSimpleColon(NoseDepPluginTester):
+    suitepath = "test_scripts/simple.py:"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple.TestSimple) ... FAIL',
+                    'test_simple_ok (test_scripts.simple.TestSimple) ... ok'])
+
+
+class TestSimpleClass(NoseDepPluginTester):
+    suitepath = "test_scripts/simple.py:TestSimple"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple.TestSimple) ... FAIL',
+                    'test_simple_ok (test_scripts.simple.TestSimple) ... ok'])
+
+
+class TestSimpleClassTestOK(NoseDepPluginTester):
+    suitepath = "test_scripts/simple.py:TestSimple.test_simple_ok"
+
+    def runTest(self):
+        self.check(['test_simple_ok (test_scripts.simple.TestSimple) ... ok'])
+
+
+class TestSimpleClassTestFAIL(NoseDepPluginTester):
+    suitepath = "test_scripts/simple.py:TestSimple.test_simple_fail"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple.TestSimple) ... FAIL'])
+
+
 class TestDecoratedFunctionalAll(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_functional_tests.py:"
 
