@@ -296,6 +296,7 @@ class NoseDep(Plugin):
         """Skip or Error the test if the dependencies are not fulfilled"""
         tn = self.test_name(test)
         res = self.dependency_failed(tn)
+        test.test._originalName = test.test._testMethodName
         if res:
             test.test.skipTestNoseDep = partial(test.test.skipTest, res)
             test.test._testMethodName = 'skipTestNoseDep'
@@ -307,11 +308,31 @@ class NoseDep(Plugin):
             test.test.errTestNoseDep = error_test
             test.test._testMethodName = 'errTestNoseDep'
 
+    # noinspection PyMethodMayBeStatic
+    def testName(self, test):
+        """Implements the plugin interface
+
+        A test that inherits from unittest.TestCase implements __str__ differently
+        so we need to work around that by storing the original test name and
+        reinsert that here for skips and errors.
+        """
+        name = str(test.test)
+        for prefix in ["skipTestNoseDep", "errTestNoseDep"]:
+            if name.startswith(prefix):
+                # noinspection PyProtectedMember
+                return name.replace(prefix, test.test._originalName)
+        return name
+
     @staticmethod
     def test_name(test):
         # Internally we are currently only using the method/function names
         # could be that we might want to use the full qualified name in the future
-        return str(test).split('.')[-1]
+
+        # And if we inherit from unittest.TestCase we need to strip some extra info
+        m = re.match('(\w+)\s+\(.+\)', str(test))
+        test_name = m.group(1) if m else str(test)
+
+        return test_name.split('.')[-1]
 
     def addSuccess(self, test):
         """The result object does not store successful results, so we have to do it"""

@@ -71,6 +71,15 @@ class TestSimple(NoseDepPluginTester):
                     'test_simple_ok (test_scripts.simple.TestSimple) ... ok'])
 
 
+class TestSimpleDecorated(NoseDepPluginTester):
+    suitepath = "test_scripts/simple_decorated.py"
+
+    def runTest(self):
+        self.check(['test_simple_decorated_ok (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
+                    'test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... FAIL',
+                    'test_simple_decorated_skip (test_scripts.simple_decorated.TestSimpleDecorated) ... SKIP:'
+                    ' Required test \'test_simple_decorated_fail\' FAILED'])
+
 class TestSimpleColon(NoseDepPluginTester):
     suitepath = "test_scripts/simple.py:"
 
