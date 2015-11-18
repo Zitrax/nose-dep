@@ -4,8 +4,7 @@ import unittest
 from nose.plugins import PluginTester
 from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
-from nose.tools import assert_in, assert_raises_regexp
-
+from nose.tools import assert_in, assert_raises_regexp, eq_
 from nosedep import NoseDep, depends
 
 
@@ -61,6 +60,16 @@ class TestUndecoratedFunctionalXunit(NoseDepPluginTester):
     def runTest(self):
         self.check(['test_scripts.undecorated_functional_tests.test_x ... ok',
                     'test_scripts.undecorated_functional_tests.test_y ... ERROR'])
+
+
+class TestDecoratedClass(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_class.py"
+
+    def setUp(self):
+        try:
+            super(TestDecoratedClass, self).setUp()
+        except ValueError as e:
+            eq_(str(e), "depends decorator can only be used on functions or methods")
 
 
 class TestSimple(NoseDepPluginTester):

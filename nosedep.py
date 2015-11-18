@@ -61,7 +61,6 @@ import imp
 import inspect
 import os
 import re
-import sys
 from collections import defaultdict
 from functools import partial, wraps
 from itertools import chain, tee
@@ -84,6 +83,8 @@ def depends(func=None, after=None, before=None, priority=None):
     :param after: The test needs to run after this/these tests. String or list of strings.
     :param before: The test needs to run before this/these tests. String or list of strings.
     """
+    if not (func is None or inspect.ismethod(func) or inspect.isfunction(func)):
+        raise ValueError("depends decorator can only be used on functions or methods")
     if not (after or before or priority):
         raise ValueError("depends decorator needs at least one argument")
 
@@ -267,11 +268,9 @@ class NoseDep(Plugin):
                         setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
                     else:  # FunctionTestCase
                         all_tests[tt.test.test.__name__] = tt
-                except AttributeError as e:
-                    # This exception is confusing by default - add some further info
-                    t, v, tb = sys.exc_info()
-                    v = AttributeError(str(e) + " - Due to: " + str(tt))
-                    reraise(t, v, tb)
+                except AttributeError:
+                    # This exception is confusing - reraise the original one
+                    reraise(tt.test.exc_class, tt.test.exc_val, tt.test.tb)
         return self.orderTests(all_tests, test)
 
     def dependency_failed(self, test):
