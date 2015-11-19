@@ -159,10 +159,21 @@ class DepLoader(TestLoader):
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
 
-        # Would have been nice to use nose.util.split_test_name(name) here
-        # but for some reason it cause an recursive loop of test loading
-        # Need to investigate further why that happens
-        parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
+        if name == '.':
+            # FIXME: This is current workaround that should be handled better
+            #        The problem is that the tests in tests.py that do not set
+            #        suitepath will cause a call to this function with name '.'
+            #        which in turn cause some tests to be tested again.
+            #        Use of '.' here cause calls with the absolute path
+            #        whicn on windows contain : and linux not causing us
+            #        to handle this case differently.
+            #        For now return an empty suite until we can handle this better.
+            return self.suiteClass([])
+        else:
+            # Would have been nice to use nose.util.split_test_name(name) here
+            # but for some reason it cause an recursive loop of test loading
+            # Need to investigate further why that happens
+            parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
         if len(parts) == 2 and parts[1]:
             if not has_class(parts[0], parts[1]):
                 self.tests.append(parts[-1].split('.')[-1])
