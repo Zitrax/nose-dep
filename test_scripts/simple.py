@@ -1,4 +1,5 @@
 import unittest
+from nose.plugins.skip import SkipTest
 
 
 class TestSimple(unittest.TestCase):
@@ -8,3 +9,6 @@ class TestSimple(unittest.TestCase):
 
     def test_simple_ok(self):
         assert 1 == 1
+
+    def test_simple_skip(self):
+        raise SkipTest()
