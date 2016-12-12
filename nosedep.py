@@ -68,7 +68,11 @@ from itertools import chain, tee
 from nose.loader import TestLoader
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
-from setuptools.compat import reraise
+try:
+    # Older versions of setuptools
+    from setuptools.compat import reraise
+except ImportError:
+    from setuptools.extern.six import reraise
 from toposort import toposort
 
 dependencies = defaultdict(set)
