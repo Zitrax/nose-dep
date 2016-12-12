@@ -4,7 +4,12 @@ import unittest
 from nose.plugins import PluginTester
 from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
-from nose.tools import assert_in, assert_raises_regexp, eq_
+from nose.tools import assert_in, eq_
+try:
+    from nose.tools import assert_raises_regex
+except ImportError:
+    # For python 2.7
+    from nose.tools import assert_raises_regexp as assert_raises_regex
 from nosedep import NoseDep, depends
 
 
@@ -263,7 +268,7 @@ class TestDependsNoArgument(NoseDepPluginTester):
         pass
 
     def makeSuite(self):
-        with assert_raises_regexp(ValueError, r'depends decorator needs at least one argument'):
+        with assert_raises_regex(ValueError, r'depends decorator needs at least one argument'):
             class TC(unittest.TestCase):
                 @depends()
                 def run_test_no_args(self):
@@ -276,7 +281,7 @@ class TestDependsSelf(NoseDepPluginTester):
         pass
 
     def makeSuite(self):
-        with assert_raises_regexp(ValueError, r'Test \'run_test_self_dep\' cannot depend on itself'):
+        with assert_raises_regex(ValueError, r'Test \'run_test_self_dep\' cannot depend on itself'):
             class TC(unittest.TestCase):
                 @depends(after='run_test_self_dep')
                 def run_test_self_dep(self):
