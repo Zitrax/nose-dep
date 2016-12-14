@@ -277,6 +277,8 @@ class NoseDep(Plugin):
         all_tests = {}
         for t in test:
             for tt in t:
+                if tt.context is None:
+                    continue
                 try:
                     if isinstance(tt, ContextSuite):  # MethodTestCase
                         all_tests[tt.context.__name__] = self.prepare_suite(tt)

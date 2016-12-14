@@ -219,6 +219,24 @@ class TestDecoratedMethod(NoseDepPluginTester):
                     'test_scripts.decorated_method_tests.TestNoseDecoratedMethod.test_cd_b ... ok'])
 
 
+class TestDecoratedSubclass(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_subclass.py:"
+
+    def runTest(self):
+        self.check(['test_scripts.decorated_method_subclass.TestNoseDecoratedChild.test_cd_a ... ok',
+                    'test_scripts.decorated_method_subclass.TestNoseDecoratedChild.test_cd_c ... ok',
+                    'test_scripts.decorated_method_subclass.TestNoseDecoratedChild.test_cd_b ... ok'])
+
+
+class TestDecoratedSubclassTestCase(NoseDepPluginTester):
+    suitepath = "test_scripts/decorated_method_subclass_testcase.py:"
+
+    def runTest(self):
+        self.check(['test_cdt_a (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
+                    'test_cdt_c (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
+                    'test_cdt_b (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok'])
+
+
 class TestDecoratedMethodSpecificNoDep(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_method_tests.py:TestNoseDecoratedMethod.test_cd_a"
 
