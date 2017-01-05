@@ -279,7 +279,7 @@ class NoseDep(Plugin):
         # top level that we need to enter.
         if test.context is None:
             tg = (t for t in test)
-            test = tg.next()
+            test = next(tg)
             # Assuming the top level only has one item below - if not
             # the current implementation is not valid. See issue 9.
             assert next(tg, None) is None
