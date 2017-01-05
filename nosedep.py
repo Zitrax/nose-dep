@@ -162,14 +162,13 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-
         if name == '.':
             # FIXME: This is current workaround that should be handled better
             #        The problem is that the tests in tests.py that do not set
             #        suitepath will cause a call to this function with name '.'
             #        which in turn cause some tests to be tested again.
             #        Use of '.' here cause calls with the absolute path
-            #        whicn on windows contain : and linux not causing us
+            #        which on windows contain : and linux not causing us
             #        to handle this case differently.
             #        For now return an empty suite until we can handle this better.
             return self.suiteClass([])
@@ -275,6 +274,16 @@ class NoseDep(Plugin):
     def prepareTest(self, test):
         """Prepare and determine test ordering"""
         all_tests = {}
+
+        # When passing a directory to nose we have an extra
+        # top level that we need to enter.
+        if test.context is None:
+            tg = (t for t in test)
+            test = tg.next()
+            # Assuming the top level only has one item below - if not
+            # the current implementation is not valid. See issue 9.
+            assert next(tg, None) is None
+
         for t in test:
             for tt in t:
                 if tt.context is None:
