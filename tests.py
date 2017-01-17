@@ -5,6 +5,7 @@ from nose.plugins import PluginTester
 from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
 from nose.tools import assert_in, eq_
+
 try:
     from nose.tools import assert_raises_regex
 except ImportError:
@@ -94,6 +95,7 @@ class TestSimpleDecorated(NoseDepPluginTester):
                     'test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... FAIL',
                     'test_simple_decorated_skip (test_scripts.simple_decorated.TestSimpleDecorated) ... SKIP:'
                     ' Required test \'test_simple_decorated_fail\' FAILED'])
+
 
 class TestSimpleColon(NoseDepPluginTester):
     suitepath = "test_scripts/simple.py:"
@@ -232,9 +234,10 @@ class TestDecoratedSubclassTestCase(NoseDepPluginTester):
     suitepath = "test_scripts/decorated_method_subclass_testcase.py:"
 
     def runTest(self):
-        self.check(['test_cdt_a (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
-                    'test_cdt_c (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
-                    'test_cdt_b (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok'])
+        self.check(
+            ['test_cdt_a (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
+             'test_cdt_c (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok',
+             'test_cdt_b (test_scripts.decorated_method_subclass_testcase.TestNoseDecoratedTestCaseChild) ... ok'])
 
 
 class TestDecoratedMethodSpecificNoDep(NoseDepPluginTester):
@@ -281,6 +284,26 @@ class TestDecoratedMethodPriority(NoseDepPluginTester):
                     'test_scripts.decorated_method_priority.TestMP.test_dmp_e ... ok'])
 
 
+class TestDecoratedDirectory2Levels(NoseDepPluginTester):
+    suitepath = "test_scripts/dir_test/dir_test_2:"
+
+    def runTest(self):
+        self.check(['test_04 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_03 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_02 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_01 (dir_test_2.dir_tests.display_node_list) ... ok'])
+
+
+class TestDecoratedDirectoryDirect(NoseDepPluginTester):
+    suitepath = "test_scripts/dir_test/dir_test_2/dir_tests.py:"
+
+    def runTest(self):
+        self.check(['test_04 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_03 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_02 (dir_test_2.dir_tests.display_node_list) ... ok',
+                    'test_01 (dir_test_2.dir_tests.display_node_list) ... ok'])
+
+
 class TestDependsNoArgument(NoseDepPluginTester):
     def test_no_args(self):
         pass
@@ -291,6 +314,7 @@ class TestDependsNoArgument(NoseDepPluginTester):
                 @depends()
                 def run_test_no_args(self):
                     pass
+
             return [TC('run_test_no_args')]
 
 
@@ -304,6 +328,7 @@ class TestDependsSelf(NoseDepPluginTester):
                 @depends(after='run_test_self_dep')
                 def run_test_self_dep(self):
                     pass
+
             return [TC('run_test_self_dep')]
 
 

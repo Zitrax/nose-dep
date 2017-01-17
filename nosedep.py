@@ -162,14 +162,13 @@ class DepLoader(TestLoader):
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
-
         if name == '.':
             # FIXME: This is current workaround that should be handled better
             #        The problem is that the tests in tests.py that do not set
             #        suitepath will cause a call to this function with name '.'
             #        which in turn cause some tests to be tested again.
             #        Use of '.' here cause calls with the absolute path
-            #        whicn on windows contain : and linux not causing us
+            #        which on windows contain : and linux not causing us
             #        to handle this case differently.
             #        For now return an empty suite until we can handle this better.
             return self.suiteClass([])
@@ -275,20 +274,35 @@ class NoseDep(Plugin):
     def prepareTest(self, test):
         """Prepare and determine test ordering"""
         all_tests = {}
-        for t in test:
-            for tt in t:
-                if tt.context is None:
-                    continue
-                try:
-                    if isinstance(tt, ContextSuite):  # MethodTestCase
-                        all_tests[tt.context.__name__] = self.prepare_suite(tt)
-                        setattr(all_tests[tt.context.__name__], 'nosedep_run', True)
-                    else:  # FunctionTestCase
-                        all_tests[tt.test.test.__name__] = tt
-                except AttributeError:
-                    # This exception is confusing - reraise the original one
-                    reraise(tt.test.exc_class, tt.test.exc_val, tt.test.tb)
+
+        # When passing a directory to nose we have an extra
+        # top level that we need to enter.
+        all_tests = self.prepare_tests_on_levels(test, all_tests)
         return self.orderTests(all_tests, test)
+
+    def prepare_tests_on_levels(self, test, all_tests):
+        """Find test level of ContextSuite object
+
+        prepare_tests_on_levels() is a recursive function use to find the parent directory of a test or group of tests.
+        An attempt is made to iterate through the presented level of a ContextSuite class object. If the iteration
+        is successful, the iterated level of ContextSuite is passed to prepare_tests_on_levels() for additional
+        processing. If a TypeError is generated, the exception fails back to the previous prepare_tests_on_levels()
+        call. The TypeError exception processes this ContextSuite level as the parent level of tests.
+        """
+        for t in test:
+            try:
+                self.prepare_tests_on_levels(t, all_tests)
+            except TypeError:
+                if isinstance(test, ContextSuite):  # MethodTestCase
+                    all_tests[test.context.__name__] = self.prepare_suite(test)
+                    setattr(all_tests[test.context.__name__], 'nosedep_run', True)
+                else:  # FunctionTestCase
+                    all_tests[test.test.test.__name__] = test
+                break
+            except AttributeError:
+                # This exception is confusing - reraise the original one
+                reraise(test.test.exc_class, test.test.exc_val, test.test.tb)
+        return all_tests
 
     def dependency_failed(self, test):
         """Returns an error string if any of the dependencies failed"""
