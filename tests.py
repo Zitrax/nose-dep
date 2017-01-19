@@ -288,20 +288,20 @@ class TestDecoratedDirectory2Levels(NoseDepPluginTester):
     suitepath = "test_scripts/dir_test/dir_test_2:"
 
     def runTest(self):
-        self.check(['test_04 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_03 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_02 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_01 (dir_test_2.dir_tests.display_node_list) ... ok'])
+        self.check(['test_04 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_03 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_02 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_01 (dir_test_2.dir_tests.DisplayNodeList) ... ok'])
 
 
 class TestDecoratedDirectoryDirect(NoseDepPluginTester):
     suitepath = "test_scripts/dir_test/dir_test_2/dir_tests.py:"
 
     def runTest(self):
-        self.check(['test_04 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_03 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_02 (dir_test_2.dir_tests.display_node_list) ... ok',
-                    'test_01 (dir_test_2.dir_tests.display_node_list) ... ok'])
+        self.check(['test_04 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_03 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_02 (dir_test_2.dir_tests.DisplayNodeList) ... ok',
+                    'test_01 (dir_test_2.dir_tests.DisplayNodeList) ... ok'])
 
 
 class TestDependsNoArgument(NoseDepPluginTester):

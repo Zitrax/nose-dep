@@ -12,6 +12,8 @@ class TestNoseDecoratedTestCaseParent(unittest.TestCase):
         cls.did_setup_class = False
         cls.did_teardown_class = False
 
+    # noinspection PyPep8Naming
+    # ( following naming of TestCase )
     def __init__(self, methodName='runTest'):
         super(TestNoseDecoratedTestCaseParent, self).__init__(methodName)
         self.did_setup = False

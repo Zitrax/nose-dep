@@ -1,7 +1,8 @@
 import unittest
 from nosedep import depends
 
-class display_node_list(unittest.TestCase):
+
+class DisplayNodeList(unittest.TestCase):
     @depends(after='test_02')
     def test_01(self):
         pass
