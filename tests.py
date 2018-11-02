@@ -1,7 +1,9 @@
+#!/usr/bin/env python
 import os
 import unittest
 
 from nose.plugins import PluginTester
+from nose.plugins.collect import CollectOnly
 from nose.plugins.skip import Skip
 from nose.plugins.xunit import Xunit
 from nose.tools import assert_in, eq_
@@ -95,6 +97,28 @@ class TestSimpleDecorated(NoseDepPluginTester):
                     'test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... FAIL',
                     'test_simple_decorated_skip (test_scripts.simple_decorated.TestSimpleDecorated) ... SKIP:'
                     ' Required test \'test_simple_decorated_fail\' FAILED'])
+
+
+class TestSimpleCollect(NoseDepPluginTester):
+    args = ['-v', '--collect-only']
+    plugins = [NoseDep(), CollectOnly()]
+    suitepath = "test_scripts/simple.py"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple.TestSimple) ... ok',
+                    'test_simple_ok (test_scripts.simple.TestSimple) ... ok',
+                    'test_simple_skip (test_scripts.simple.TestSimple) ... ok'])
+
+
+class TestSimpleDecoratedCollect(NoseDepPluginTester):
+    args = ['-v', '--collect-only']
+    plugins = [NoseDep(), CollectOnly()]
+    suitepath = "test_scripts/simple_decorated.py"
+
+    def runTest(self):
+        self.check(['test_simple_decorated_ok (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
+                    'test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
+                    'test_simple_decorated_skip (test_scripts.simple_decorated.TestSimpleDecorated) ... ok'])
 
 
 class TestSimpleColon(NoseDepPluginTester):
