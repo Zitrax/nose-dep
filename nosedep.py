@@ -210,14 +210,18 @@ class NoseDep(Plugin):
         self.loader = None
         self.ok_results = set()
         self.results = None
+        self.disable = False
 
     def options(self, parser, env):
         super(self.__class__, self).options(parser, env)
 
     def configure(self, options, conf):
+        self.disable = getattr(conf.parser.values, 'collect_only', False)
         super(self.__class__, self).configure(options, conf)
 
     def prepareTestLoader(self, loader):
+        if self.disable:
+            return None
         self.loader = DepLoader(loader.config, loader.importer, loader.workingDir, loader.selector)
         return self.loader
 
@@ -273,6 +277,9 @@ class NoseDep(Plugin):
 
     def prepareTest(self, test):
         """Prepare and determine test ordering"""
+        if self.disable:
+            return None
+
         all_tests = {}
 
         # When passing a directory to nose we have an extra

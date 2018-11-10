@@ -110,14 +110,49 @@ class TestSimpleCollect(NoseDepPluginTester):
                     'test_simple_skip (test_scripts.simple.TestSimple) ... ok'])
 
 
+class TestSimpleSetupFailNoNosedep(NoseDepPluginTester):
+    """Setup failure should not generate error in collect mode without nosedep
+    (verify expectation)
+    """
+    activate = '-v'
+    args = ['--collect-only']
+    plugins = [CollectOnly()]
+    suitepath = "test_scripts/simple_setup_fail.py"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple_setup_fail.TestSimple) ... ok',
+                    'test_simple_ok (test_scripts.simple_setup_fail.TestSimple) ... ok',
+                    'test_simple_skip (test_scripts.simple_setup_fail.TestSimple) ... ok'])
+
+
+class TestSimpleSetupFailCollect(NoseDepPluginTester):
+    """Setup failure should not generate error in collect mode with nosedep"""
+    args = ['-v', '--collect-only']
+    plugins = [NoseDep(), CollectOnly()]
+    suitepath = "test_scripts/simple_setup_fail.py"
+
+    def runTest(self):
+        self.check(['test_simple_fail (test_scripts.simple_setup_fail.TestSimple) ... ok',
+                    'test_simple_ok (test_scripts.simple_setup_fail.TestSimple) ... ok',
+                    'test_simple_skip (test_scripts.simple_setup_fail.TestSimple) ... ok'])
+
+
+class TestSimpleSetupFail(NoseDepPluginTester):
+    """Setup failure should generate error"""
+    suitepath = "test_scripts/simple_setup_fail.py"
+
+    def runTest(self):
+        eq_('ERROR\n', list(self.output)[0])
+
+
 class TestSimpleDecoratedCollect(NoseDepPluginTester):
     args = ['-v', '--collect-only']
     plugins = [NoseDep(), CollectOnly()]
     suitepath = "test_scripts/simple_decorated.py"
 
     def runTest(self):
-        self.check(['test_simple_decorated_ok (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
-                    'test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
+        self.check(['test_simple_decorated_fail (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
+                    'test_simple_decorated_ok (test_scripts.simple_decorated.TestSimpleDecorated) ... ok',
                     'test_simple_decorated_skip (test_scripts.simple_decorated.TestSimpleDecorated) ... ok'])
 
 
