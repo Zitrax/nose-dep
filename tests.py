@@ -263,6 +263,27 @@ class TestDecoratedFunctionalSpecificC(NoseDepPluginTester):
                     'test_scripts.decorated_functional_tests.test_dft_c ... ok'])
 
 
+class TestUndecoratedMethodClasses(NoseDepPluginTester):
+    suitepath = "test_scripts/undecorated_method_classes.py:"
+
+    def runTest(self):
+        self.check(['test_umc_a (test_scripts.undecorated_method_classes.descendent1) ... ok',
+                    'test_umc_b (test_scripts.undecorated_method_classes.descendent1) ... ok',
+                    'test_umc_a (test_scripts.undecorated_method_classes.descendent2) ... ok',
+                    'test_umc_b (test_scripts.undecorated_method_classes.descendent2) ... ok',
+                    'test_umc_a (test_scripts.undecorated_method_classes.undecorated_method_classes) ... ok',
+                    'test_umc_b (test_scripts.undecorated_method_classes.undecorated_method_classes) ... ok'])
+
+
+class TestUndecoratedMethodClasses(NoseDepPluginTester):
+    """Specifying a specific class should run tests only from that class"""
+    suitepath = "test_scripts/undecorated_method_classes.py:descendent1"
+
+    def runTest(self):
+        self.check(['test_umc_a (test_scripts.undecorated_method_classes.descendent1) ... ok',
+                    'test_umc_b (test_scripts.undecorated_method_classes.descendent1) ... ok'])
+
+
 class TestUndecoratedMethod(NoseDepPluginTester):
     suitepath = "test_scripts/undecorated_method_tests.py:"
 

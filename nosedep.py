@@ -159,6 +159,7 @@ class DepLoader(TestLoader):
     def __init__(self, config=None, importer=None, workingDir=None, selector=None):
         super(DepLoader, self).__init__(config, importer, workingDir, selector)
         self.tests = []
+        self.test_class = None
 
     def loadTestsFromName(self, name, module=None, discovered=False):
         """Need to load all tests since we might have dependencies"""
@@ -180,8 +181,9 @@ class DepLoader(TestLoader):
         if len(parts) == 2 and parts[1]:
             if not has_class(parts[0], parts[1]):
                 self.tests.append(parts[-1].split('.')[-1])
+            else:
+                self.test_class = parts[1]
         return super(DepLoader, self).loadTestsFromName(parts[0], module, discovered)
-
 
 def merge_dicts(d1, d2):
     d3 = defaultdict(set)
@@ -224,6 +226,12 @@ class NoseDep(Plugin):
             return None
         self.loader = DepLoader(loader.config, loader.importer, loader.workingDir, loader.selector)
         return self.loader
+
+    def wantClass(self, cls):
+        if self.loader and self.loader.test_class:
+            return self.loader.test_class == cls.__name__
+
+        return None
 
     @staticmethod
     def calculate_dependencies():
