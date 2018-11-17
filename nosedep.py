@@ -131,7 +131,7 @@ def import_from_uri(uri, absl=True):
     if not absl:
         uri = os.path.normpath(os.path.join(os.path.dirname(__file__), uri))
     path, fname = os.path.split(uri)
-    mname, ext = os.path.splitext(fname)
+    mname, _ext = os.path.splitext(fname)
     no_ext = os.path.join(path, mname)
     if os.path.exists(no_ext + '.pyc'):
         try:
@@ -143,6 +143,7 @@ def import_from_uri(uri, absl=True):
             return imp.load_source(mname, no_ext + '.py')
         except ImportError:
             pass
+    return None
 
 
 def has_class(file_name, class_name):
@@ -172,11 +173,12 @@ class DepLoader(TestLoader):
             #        to handle this case differently.
             #        For now return an empty suite until we can handle this better.
             return self.suiteClass([])
-        else:
-            # Would have been nice to use nose.util.split_test_name(name) here
-            # but for some reason it cause an recursive loop of test loading
-            # Need to investigate further why that happens
-            parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
+
+        # Would have been nice to use nose.util.split_test_name(name) here
+        # but for some reason it cause an recursive loop of test loading
+        # Need to investigate further why that happens
+        parts = name.split(':' if ':' in name else '.') if not name.endswith('.py') else [name]
+
         if len(parts) == 2 and parts[1]:
             if not has_class(parts[0], parts[1]):
                 self.tests.append(parts[-1].split('.')[-1])
@@ -213,11 +215,11 @@ class NoseDep(Plugin):
         self.disable = False
 
     def options(self, parser, env):
-        super(self.__class__, self).options(parser, env)
+        super(NoseDep, self).options(parser, env)
 
     def configure(self, options, conf):
         self.disable = getattr(conf.parser.values, 'collect_only', False)
-        super(self.__class__, self).configure(options, conf)
+        super(NoseDep, self).configure(options, conf)
 
     def prepareTestLoader(self, loader):
         if self.disable:
@@ -254,7 +256,8 @@ class NoseDep(Plugin):
                     setattr(all_tests[t], 'nosedep_run', True)
                     mark_deps(t)
 
-            conds[0] = conds[1] = lambda t: t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
+            conds[0] = conds[1] = \
+                lambda t: t in all_tests and getattr(all_tests[t], 'nosedep_run', False)
 
         no_deps = (t for t in ordered_all_tests if t not in order and conds[0](t))
         deps = (t for t in order if conds[1](t))
@@ -266,7 +269,7 @@ class NoseDep(Plugin):
         """Prepare suite and determine test ordering"""
         all_tests = {}
         for s in suite:
-            m = re.match('(\w+)\s+\(.+\)', str(s))
+            m = re.match(r'(\w+)\s+\(.+\)', str(s))
             if m:
                 name = m.group(1)
             else:
@@ -290,11 +293,15 @@ class NoseDep(Plugin):
     def prepare_tests_on_levels(self, test, all_tests):
         """Find test level of ContextSuite object
 
-        prepare_tests_on_levels() is a recursive function use to find the parent directory of a test or group of tests.
-        An attempt is made to iterate through the presented level of a ContextSuite class object. If the iteration
-        is successful, the iterated level of ContextSuite is passed to prepare_tests_on_levels() for additional
-        processing. If a TypeError is generated, the exception fails back to the previous prepare_tests_on_levels()
-        call. The TypeError exception processes this ContextSuite level as the parent level of tests.
+        prepare_tests_on_levels() is a recursive function use to find the
+        parent directory of a test or group of tests. An attempt is made to
+        iterate through the presented level of a ContextSuite class object. If
+        the iteration is successful, the iterated level of ContextSuite is
+        passed to prepare_tests_on_levels() for additional processing.
+
+        If a TypeError is generated, the exception fails back to the previous
+        prepare_tests_on_levels() call. The TypeError exception processes this
+        ContextSuite level as the parent level of tests.
         """
         for t in test:
             try:
@@ -366,7 +373,7 @@ class NoseDep(Plugin):
         # could be that we might want to use the full qualified name in the future
 
         # And if we inherit from unittest.TestCase we need to strip some extra info
-        m = re.match('(\w+)\s+\(.+\)', str(test))
+        m = re.match(r'(\w+)\s+\(.+\)', str(test))
         test_name = m.group(1) if m else str(test)
 
         return test_name.split('.')[-1]
